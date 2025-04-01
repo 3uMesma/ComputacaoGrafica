@@ -9,11 +9,11 @@ Cenário de um avião em voo. Os 5 objetos que compõem a cena são:
 
 - [X] avião, 
 - [ ] nuvem, 
-- [ ] pássaros, 
+- [X] pássaro, 
 - [X] sol,
 - [X] oceano
 
-Desses, o avião e as nuvens (decidir isso) serão 3D. 
+Desses, o avião e as nuvens serão 3D. 
 
 **Código principal:**
 Usamos o código disponibilizado pelo professor para as atividades práticas para configurar a tela, os shaders e aproveitar outras funções. A partir desse código fornecido em sala, fizemos as alterações correspondentes ao nosso trabalho. 
