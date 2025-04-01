@@ -10,7 +10,7 @@ Cenário de um avião em voo. Os 5 objetos que compõem a cena são:
 - [X] avião, 
 - [ ] nuvem, 
 - [ ] pássaros, 
-- [ ] sol,
+- [X] sol,
 - [X] oceano
 
 Desses, o avião e as nuvens (decidir isso) serão 3D. 
