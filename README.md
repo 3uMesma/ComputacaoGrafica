@@ -8,7 +8,7 @@ Arthur Queiroz 13671532
 Cenário de um avião em voo. Os 5 objetos que compõem a cena são: 
 
 - [X] avião, 
-- [ ] nuvem, 
+- [X] nuvem, 
 - [X] pássaro, 
 - [X] sol,
 - [X] oceano
