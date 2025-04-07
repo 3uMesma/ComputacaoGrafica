@@ -489,8 +489,9 @@ airplane_angle_y = 0.0
 airplane_angle_z = 0.0
 
 cloud_pos = (-3.0, 1.5, 0.0)
-cloud_scale = (0.2, 0.2, 0.2)
+cloud_scale = [0.2, 0.2, 0.2]
 cloud_angle = 0.0
+cloud_scale_speed = 0.001
 
 ocean_pos = [0.0, -2.0, 0.0]
 ocean_scale = [10.0, 10.0, 1.0]
@@ -499,14 +500,17 @@ sun_pos = (3.0, 2.0, 0.0)
 sun_scale = (0.5, 0.5, 0.5)
 
 birds_positions = [
-    (-2.0, 1.0, 0.0),
-    (-1.5, 1.2, 0.0),
-    (-2.5, 0.8, 0.0)
+    [-2.0, 1.0, 0.0],
+    [-1.5, 1.2, 0.0],
+    [-2.5, 0.8, 0.0]
 ]
-bird_scale = (0.1, 0.1, 0.1)
+bird_angle_z = - math.pi / 2
+bird_scale = [0.1, 0.1, 0.1]
 
 wireframe = False
 p_pressed = False
+
+zoom_speed = 0.001
 
 # -------------------------------------
 # Loop principal
@@ -524,21 +528,11 @@ while not glfw.window_should_close(window):
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
     else:
         p_pressed = False
-
+    
+    
+            
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-    # --- Desenha o OCEANO ---
-    # Atualiza a escala e posição via teclado
-    if glfw.get_key(window, glfw.KEY_G) == glfw.PRESS:
-        ocean_scale[0] += 0.001
-        ocean_scale[1] += 0.001
-        ocean_pos[0] += 0.001
-        ocean_pos[1] += 0.001
-    if glfw.get_key(window, glfw.KEY_H) == glfw.PRESS:
-        ocean_scale[0] -= 0.001
-        ocean_scale[1] -= 0.001
-        ocean_pos[0] -= 0.001
-        ocean_pos[1] -= 0.001
 
     T_ocean = translacao(ocean_pos[0], ocean_pos[1], ocean_pos[2])
     S_ocean = escala(ocean_scale[0], ocean_scale[1], ocean_scale[2])
@@ -569,8 +563,23 @@ while not glfw.window_should_close(window):
         airplane_angle_z += airplane_rotational_speed
     if glfw.get_key(window, glfw.KEY_E) == glfw.PRESS:
         airplane_angle_z -= airplane_rotational_speed
+    if glfw.get_key(window, glfw.KEY_N) == glfw.PRESS:
+        bird_angle_z += airplane_rotational_speed
+    if glfw.get_key(window, glfw.KEY_M) == glfw.PRESS:
+        bird_angle_z -= airplane_rotational_speed
 
-    # Movimento "para frente" com a tecla W
+    # Controle via teclado para escala
+    if glfw.get_key(window, glfw.KEY_K) == glfw.PRESS and cloud_scale[0] > 0.1:
+        cloud_scale[0] -= cloud_scale_speed
+        cloud_scale[1] -= cloud_scale_speed
+        cloud_scale[2] -= cloud_scale_speed
+    if glfw.get_key(window, glfw.KEY_L) == glfw.PRESS and cloud_scale[0] < 0.7:
+        cloud_scale[0] += cloud_scale_speed
+        cloud_scale[1] += cloud_scale_speed
+        cloud_scale[2] += cloud_scale_speed
+
+
+    # Movimento "para frente" com a tecla W (aviao)
     if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS:
         # Constrói a matriz de rotação completa
         rX = rotacao_x(airplane_angle_x)
@@ -586,6 +595,24 @@ while not glfw.window_should_close(window):
         airplane_pos[0] += airplane_speed * forward[0]
         airplane_pos[1] += airplane_speed * forward[1]
         airplane_pos[2] += airplane_speed * forward[2]
+    
+    # Movimento "para frente" com a tecla J (pássaros)
+    if glfw.get_key(window, glfw.KEY_J) == glfw.PRESS:
+        # Constrói a matriz de rotação completa
+        rX = rotacao_x(0)
+        rY = rotacao_y(0)
+        rZ = rotacao_z(bird_angle_z + math.pi / 2)
+        rotationMatrix = multiplica_matriz(rZ, multiplica_matriz(rY, rX))
+        # Calcula a direção para frente (vetor (1, 0, 0) transformado)
+        rotMat = rotationMatrix.reshape(4, 4)
+        forward = np.dot(rotMat, np.array([1, 0, 0, 0], dtype=np.float32))
+        norm = np.linalg.norm(forward[:3])
+        if norm != 0:
+            forward = forward / norm
+        for i in range(len(birds_positions)):
+            birds_positions[i][0] += airplane_speed * forward[0]
+            birds_positions[i][1] += airplane_speed * forward[1]
+            birds_positions[i][2] += airplane_speed * forward[2]
 
     # Monta a model matrix para o avião: T * R * S
     T_airplane = translacao(airplane_pos[0], airplane_pos[1], airplane_pos[2])
@@ -650,7 +677,7 @@ while not glfw.window_should_close(window):
     glUniform4f(loc_color, 0.0, 0.0, 0.0, 1.0)  # cor preta
     for pos in birds_positions:
         T_bird = translacao(pos[0], pos[1], pos[2])
-        R_bird = rotacao_z(math.radians(-90.0))
+        R_bird = rotacao_z(bird_angle_z)
         S_bird = escala(bird_scale[0], bird_scale[1], bird_scale[2])
         model_bird = multiplica_matriz(T_bird, multiplica_matriz(R_bird, S_bird))
         mvp_bird = multiplica_matriz(proj, model_bird)
