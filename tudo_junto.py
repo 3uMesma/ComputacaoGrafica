@@ -68,20 +68,36 @@ def rotacao_arbitraria(theta, ax, ay, az):
     # Normaliza o eixo
     norm = math.sqrt(ax*ax + ay*ay + az*az)
     ax /= norm; ay /= norm; az /= norm
-    c = math.cos(theta)
-    s = math.sin(theta)
-    t = 1 - c
-    m = np.identity(4, dtype=np.float32)
-    m[0, 0] = t * ax * ax + c
-    m[0, 1] = t * ax * ay - s * az
-    m[0, 2] = t * ax * az + s * ay
-    m[1, 0] = t * ax * ay + s * az
-    m[1, 1] = t * ay * ay + c
-    m[1, 2] = t * ay * az - s * ax
-    m[2, 0] = t * ax * az - s * ay
-    m[2, 1] = t * ay * az + s * ax
-    m[2, 2] = t * az * az + c
-    return m.reshape(1, 16)
+    
+    # Calcula o ângulo alpha (alinhamento da projeção de k com o eixo X)
+    alpha = math.atan2(ay, ax)
+    
+    # Calcula l, a magnitude da projeção de k no plano XY
+    l = math.sqrt(ax*ax + ay*ay)
+    
+    # Calcula o ângulo beta (alinhamento do eixo com o eixo Z)
+    beta = math.atan2(l, az)
+    
+    # Construção das matrizes de rotação simples:
+    R_z_alpha    = rotacao_z(alpha)       # Rotaciona em torno de Z por α
+    R_y_beta     = rotacao_y(beta)        # Rotaciona em torno de Y por β
+    R_z_theta    = rotacao_z(theta)       # Rotaciona em torno de Z pelo ângulo desejado θ
+    R_y_minusBeta= rotacao_y(-beta)       # Rotaciona em torno de Y por -β
+    R_z_minusAlpha= rotacao_z(-alpha)     # Rotaciona em torno de Z por -α
+
+    # Compondo as matrizes (lembrando que a ordem de multiplicação importa)
+    R = multiplica_matriz(
+            R_z_alpha,
+            multiplica_matriz(
+                R_y_beta,
+                multiplica_matriz(
+                    R_z_theta,
+                    multiplica_matriz(R_y_minusBeta, R_z_minusAlpha)
+                )
+            )
+        )
+    return R
+
 
 def ortho(left, right, bottom, top, near, far):
     m = np.zeros((4, 4), dtype=np.float32)
