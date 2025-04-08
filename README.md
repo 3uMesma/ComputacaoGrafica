@@ -44,4 +44,4 @@ Testado em linux e no windows. Os notebooks na pasta objetos servem só pra voc�
 
 - Também note que a nuvem rotaciona constantemente para ficar evidenciado que é 3D
 
-- 
+- Extras: O avião também translada com W. Os pássaros rotacionam com N e M.
