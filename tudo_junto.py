@@ -1,3 +1,8 @@
+"""
+Arthur Queiroz Moura - 13671532
+Amanda Kasat Baltor - 13727210
+"""
+
 import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders
