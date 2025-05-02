@@ -422,7 +422,7 @@ glEnableVertexAttribArray(0)
 
 # -------------------------------------
 # 4. SOL
-n_lados = 4
+n_lados = 20
 angles = np.linspace(0, 2 * math.pi, n_lados, endpoint=False)
 sun_vertices = [(math.cos(a), math.sin(a), 0.0) for a in angles]
 sun_vertices.insert(0, (0.0, 0.0, 0.0))  # centro
@@ -672,7 +672,7 @@ while not glfw.window_should_close(window):
     glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, ctypes.c_void_p((24+18+18+24+12+12+30+18) * 4))
 
     # --- Desenha a NUVEM ---
-    cloud_angle += 0.001
+    cloud_angle += 0.0005
     T_cloud = translacao(cloud_pos[0], cloud_pos[1], cloud_pos[2])
     R_cloud = rotacao_arbitraria(cloud_angle, 1, 1, 1)
     S_cloud = escala(cloud_scale[0], cloud_scale[1], cloud_scale[2])
