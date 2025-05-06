@@ -1,0 +1,188 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 22.03.2022 15:31:37
+
+newmtl wire_143225087
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka 0.5608 0.8824 0.3412
+	Kd 0.5608 0.8824 0.3412
+	Ks 0.3500 0.3500 0.3500
+
+newmtl wire_028028177
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka 0.1098 0.1098 0.6941
+	Kd 0.1098 0.1098 0.6941
+	Ks 0.3500 0.3500 0.3500
+
+newmtl wire_177027088
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka 0.6941 0.1059 0.3451
+	Kd 0.6941 0.1059 0.3451
+	Ks 0.3500 0.3500 0.3500
+
+newmtl CRN_V_N_Material_Persian_OTHER_3
+	Ns 33.5714
+	Ni 1.6000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 1.0000 1.0000 1.0000
+	Ks 0.6118 0.6118 0.6118
+	Ke 0.0000 0.0000 0.0000
+
+newmtl CRN_V_N_Material_Persian_OTHER_4
+	Ns 41.4286
+	Ni 1.2000
+	d 0.8000
+	Tr 0.2000
+	Tf 0.8000 0.8000 0.8000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.9608 0.9608 0.9608
+	Ks 0.0055 0.0055 0.0055
+	Ke 0.0000 0.0000 0.0000
+
+newmtl CRN_V_N_Material_Persian_OTHER_2
+	Ns 65.0000
+	Ni 1.6000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.0863 0.0863 0.0863
+	Ks 0.9224 0.9224 0.9224
+	Ke 0.0000 0.0000 0.0000
+	map_Ks Map__4404_Speckle.tga
+
+newmtl CRN_Material__2
+	Ns 71.4286
+	Ni 1.6000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5333 0.5333 0.5333
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+
+newmtl CRN_Material__259
+	Ns 71.4286
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka C:\Program Files\Corona\materials\assets\bd636add7b95.jpg
+	map_Kd C:\Program Files\Corona\materials\assets\bd636add7b95.jpg
+
+newmtl CRN_black_and_white_pavement_25_69_diffuse
+	Ns 71.4286
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka D:\library\for3d\textures\pavemetns\black_and_white_pavement_25_69_diffuse.jpg
+	map_Kd D:\library\for3d\textures\pavemetns\black_and_white_pavement_25_69_diffuse.jpg
+
+newmtl CRN_V_N_Grass_36
+	Ns 48.5714
+	Ni 1.6000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5000 0.5000 0.5000
+	Ks 0.1113 0.1113 0.1113
+	Ke 0.0000 0.0000 0.0000
+	map_Ka D:\TIK3D\Textures\GrassHR1.jpg
+	map_Kd D:\TIK3D\Textures\GrassHR1.jpg
+
+newmtl CRN_Material__258
+	Ns 71.4286
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka D:\TIK3D\Textures\ASPHALT3.JPG
+	map_Kd D:\TIK3D\Textures\ASPHALT3.JPG
+
+newmtl CRN_Material__263
+	Ns 71.4286
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka D:\library\for3d\textures\pavemetns\conrete_pavement_pathway_25_94_diffuse.jpg
+	map_Kd D:\library\for3d\textures\pavemetns\conrete_pavement_pathway_25_94_diffuse.jpg
+
+newmtl CRN_V_N_Materials_Ground15
+	Ns 71.4286
+	Ni 1.6000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5000 0.5000 0.5000
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ks Map__54_Falloff.tga
+
+newmtl CRN_Material__398
+	Ns 41.4286
+	Ni 1.2000
+	d 0.8000
+	Tr 0.2000
+	Tf 0.8000 0.8000 0.8000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.9608 0.9608 0.9608
+	Ks 0.0055 0.0055 0.0055
+	Ke 0.0000 0.0000 0.0000
+
+newmtl CRN_sfiubccb_2K_Albedo
+	Ns 71.4286
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000

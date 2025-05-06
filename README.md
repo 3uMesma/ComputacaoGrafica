@@ -40,8 +40,4 @@ Testado em linux e no windows. Os notebooks na pasta objetos servem só pra voc�
 
 **Notas:**
 
-- Além disso, note que o avião e a nuvem são ambos objetos 3D.
-
-- Também note que a nuvem rotaciona constantemente para ficar evidenciado que é 3D
-
-- Extras: O avião também translada com W. Os pássaros rotacionam com N e M.
+- Todos os objetos são 3D. Eles foram baixados da biblioteca de objetos 3D https://www.cgtrader.com/. Todos com uso gratuito. 
