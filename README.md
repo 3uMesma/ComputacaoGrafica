@@ -48,3 +48,4 @@ Links para as texturas/objetos:
 - [Placa de pare](https://www.cgtrader.com/free-3d-models/exterior/cityscape/road-sign-pare)
 - [Parada de ônibus](https://www.cgtrader.com/free-3d-models/exterior/exterior-public/bus-stop-359b8be2-faf9-4448-b88f-913475964f7a)
 - [Skybox](https://opengameart.org/content/miramar-skybox)
+- [Textura do chão](https://www.textures4photoshop.com/tex/ground-dirt-and-sand/earth-soil-ground-texture-seamless-free.aspx)

@@ -1,10 +1,10 @@
 from OpenGL.GL import *
 from modulos.programa_shader import usar_shader
 import numpy as np
-from PIL import Image            # ADICIONADO para carregar texturas cubemap :contentReference[oaicite:0]{index=0}
+from PIL import Image            # ADICIONADO para carregar texturas cubemap
 import glm
 
-# --- Skybox helper: carrega as 6 faces em um cubemap :contentReference[oaicite:1]{index=1}
+# --- Skybox helper: carrega as 6 faces em um cubemap
 def load_cubemap(faces):
     tex_id = glGenTextures(1)
     glBindTexture(GL_TEXTURE_CUBE_MAP, tex_id)
@@ -37,9 +37,9 @@ def init_skybox(skyboxShader):
         "objetos/skybox/miramar_rt.tga",  # POSITIVE_X (right)
         "objetos/skybox/miramar_lf.tga",  # NEGATIVE_X (left)
     ]
-    cubemapTexture = load_cubemap(faces)                   # carrega cubemap :contentReference[oaicite:3]{index=3}
+    cubemapTexture = load_cubemap(faces)                   # carrega cubemap
 
-    # Skybox VAO/VBO (36 vértices de cube) :contentReference[oaicite:4]{index=4}
+    # Skybox VAO/VBO (36 vértices de cube)
     skyboxVertices = np.array([
         -1.0,  1.0, -1.0,  -1.0, -1.0, -1.0,   1.0, -1.0, -1.0,
          1.0, -1.0, -1.0,   1.0,  1.0, -1.0,  -1.0,  1.0, -1.0,

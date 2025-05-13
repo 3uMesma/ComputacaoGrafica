@@ -7,7 +7,8 @@ import math
 from modulos.programa_shader import criar_shader, usar_shader
 from modulos.objeto_cena_metadados import gen_scene_objects
 from modulos.skybox_utils import init_skybox, skybox_update
-from PIL import Image            # ADICIONADO para carregar texturas cubemap :contentReference[oaicite:0]{index=0}
+from modulos.floor_utils import init_floor, update_floor
+from PIL import Image            # ADICIONADO para carregar texturas cubemap
 
 # --- Configurações iniciais da cena ---
 ALTURA = 700
@@ -206,61 +207,8 @@ def main():
     
     # vertices do chão (x, y, z, u, v)
     floor_program = criar_shader("shaders/floor_shader.vs", "shaders/floor_shader.fs")
-    floor_vertices = np.array([
-        # pos               texcoords
-        -1000.0, -1.5, -1000.0,   0.0, 0.0,
-        1000.0, -1.5, -1000.0,   5.0, 0.0,  # u=5 para repetir 5 vezes
-        1000.0, -1.5,  1000.0,   5.0, 5.0,
-        -1000.0, -1.5,  1000.0,   0.0, 5.0,
-    ], dtype=np.float32)
-
-    floor_indices = np.array([
-        0, 1, 2,
-        2, 3, 0
-    ], dtype=np.uint32)
-
-    # criar VAO/VBO/EBO
-    floor_VAO = glGenVertexArrays(1)
-    floor_VBO = glGenBuffers(1)
-    floor_EBO = glGenBuffers(1)
-
-    glBindVertexArray(floor_VAO)
-    glBindBuffer(GL_ARRAY_BUFFER, floor_VBO)
-    glBufferData(GL_ARRAY_BUFFER, floor_vertices.nbytes, floor_vertices, GL_STATIC_DRAW)
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floor_EBO)
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, floor_indices.nbytes, floor_indices, GL_STATIC_DRAW)
-
-    # posição
-    glEnableVertexAttribArray(0)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(0))
-    # texcoords
-    glEnableVertexAttribArray(1)
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(3 * 4))
-
-    glBindVertexArray(0)
-
-    # carrega imagem
-    img = Image.open("objetos/chao/gravel_floor_02_ao_1k.png")
-    img = img.transpose(Image.FLIP_TOP_BOTTOM)  # inverter y
-    img_data = img.convert("RGBA").tobytes()
-
-    # gera textura OpenGL
-    floor_texture = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, floor_texture)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height, 0,
-                GL_RGBA, GL_UNSIGNED_BYTE, img_data)
-
-    # parâmetros de textura
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-
-    glGenerateMipmap(GL_TEXTURE_2D)
-    glBindTexture(GL_TEXTURE_2D, 0)
-
-
+    floor_VAO, floor_texture = init_floor(floor_program)  # inicializa VAO e textura do chão
+    
     glfw.show_window(window)
 
     # loop principal
@@ -275,28 +223,10 @@ def main():
         glClearColor(1.0,1.0,1.0,1.0)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE if wireframe else GL_FILL)
 
-        # ... dentro do loop de renderização, antes de desenhar seu cenário:
-
         # configuração skybox
         skybox_update(skyboxShader, cameraPos, cameraFront, cameraUp, projection_matrix(), skyboxVAO, cubemapTexture)
-        
-        # ativar shader do chão
-        usar_shader(floor_program)  # criar e usar um shader separado para o chão
-        # setar matrizes
-        glUniformMatrix4fv(glGetUniformLocation(floor_program, "view"), 1, GL_TRUE, view_matrix())
-        glUniformMatrix4fv(glGetUniformLocation(floor_program, "projection"), 1, GL_TRUE, projection_matrix())
-        model = glm.mat4(1.0)  # já está no eixo Y = 0
-        glUniformMatrix4fv(glGetUniformLocation(floor_program, "model"), 1, GL_FALSE, glm.value_ptr(model))
 
-        # bind textura
-        glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, floor_texture)
-        glUniform1i(glGetUniformLocation(floor_program, "tex_diffuse"), 0)
-
-        # desenha o VAO do chão
-        glBindVertexArray(floor_VAO)
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
-        glBindVertexArray(0)
+        update_floor(floor_program, view_matrix(), projection_matrix(), floor_VAO, floor_texture)
 
         # restabelece depth test para o resto da cena
         glDepthFunc(GL_LESS)

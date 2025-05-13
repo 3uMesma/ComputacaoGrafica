@@ -123,37 +123,23 @@ class GenericObj:
         self.texture_ids = {}
         glEnable(GL_TEXTURE_2D)
 
-        def create_black_texture():
-            # gera textura 1x1 preta (RGB)
-            black = glGenTextures(1)
-            glBindTexture(GL_TEXTURE_2D, black)
-            data = bytes([0, 0, 0])
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, data)
+        self.first_default_texture = None
+        for mat, tex_file in mat_map.items():
+            path = os.path.join(folder, tex_file)
+            print(f"Carregando textura '{path}' para material '{mat}'")
+            tex_handle = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D, tex_handle)
+            img = Image.open(path)
+            img = img.convert('RGB')
+            w, h = img.size
+            fmt = GL_RGB
+            data = img.tobytes('raw', img.mode, 0, -1)
+            # parâmetros de wrap/filter
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-            return black
-
-        self.first_default_texture = None
-        for mat, tex_file in mat_map.items():
-            if 'ASPHALT3' in tex_file:
-                tex_handle = create_black_texture()
-            else:
-                tex_handle = glGenTextures(1)
-                glBindTexture(GL_TEXTURE_2D, tex_handle)
-                path = os.path.join(folder, tex_file)
-                img = Image.open(path)
-                img = img.convert('RGBA') if img.mode == 'RGBA' else img.convert('RGB')
-                w, h = img.size
-                fmt = GL_RGBA if img.mode == 'RGBA' else GL_RGB
-                data = img.tobytes('raw', img.mode, 0, -1)
-                # parâmetros de wrap/filter
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-                glTexImage2D(GL_TEXTURE_2D, 0, fmt, w, h, 0, fmt, GL_UNSIGNED_BYTE, data)
+            glTexImage2D(GL_TEXTURE_2D, 0, fmt, w, h, 0, fmt, GL_UNSIGNED_BYTE, data)
 
             self.texture_ids[mat] = tex_handle
             if self.first_default_texture is None:
