@@ -148,9 +148,11 @@ def load_obj_and_texture(objFile, textures_path):
     material_to_texture = {
         'CRN_Material__258': 'ASPHALT3.JPG',
         'CRN_Material__259': 'bd636add7b95.jpg',
-        'CRN_black_and_white_pavement_25_69_diffuse': 'conrete_pavement_pathway_25_94_diffuse.jpg',
-        'CRN_V_N_Grass_36': 'GRASSHR1.jpg',
+        'CRN_black_and_white_pavement_25_69_diffuse': 'black_and_white_pavement_25_69_diffuse.jpg',
+        
+        'CRN_V_N_Grass_36': 'GrassHR1.jpg',
         'CRN_sfiubccb_2K_Albedo': 'sfiubccb_2K_Albedo.jpg',
+
         # Adicione outros mapeamentos conforme necessário
     }
     
@@ -213,9 +215,12 @@ def desenha_rua(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z, material_gro
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
     
     # Desenha cada parte com sua textura apropriada
+    print(f'Os material groups são {material_groups}')
     for material, group in material_groups.items():
         texture_file = group['texture']
+        print(f"Desenhando material: {material} com textura: {texture_file}")
         if texture_file in texture_ids:
+            print(f"Usando textura: {texture_file} com ID: {texture_ids[texture_file]}")
             glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, texture_ids[texture_file])
             glUniform1i(glGetUniformLocation(program, "texture_diffuse1"), 0)
@@ -407,13 +412,6 @@ glfw.show_window(window)
 glEnable(GL_DEPTH_TEST) ### importante para 3D
 polygonal_mode = False 
 
-# Após compilar o programa do shader:
-baseColor_loc = glGetUniformLocation(program, "AsphaltTexture")
-normal_loc = glGetUniformLocation(program, "AsphaltCloseTexture")
-metallic_loc = glGetUniformLocation(program, "CementTexture")
-
-if baseColor_loc == -1 or normal_loc == -1 or metallic_loc == -1:
-    print("ERRO: Uniforms do shader não encontrados! Verifique os nomes no shader")
     
 while not glfw.window_should_close(window):
 

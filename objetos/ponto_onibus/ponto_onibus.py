@@ -148,7 +148,7 @@ def load_obj_and_texture(objFile, textures_path):
     material_to_texture = {
         'dark_wood': 'dark_wood_diff_1k.jpg',
         'denim_fabric': 'denim_fabric_diff_1k.jpg',
-        'denmin_fabric_02': 'denim_fabric_02_diff_1k.jpg',
+        'denmin_fabric_02': 'denim_fabric_diff_1k.jpg',
         'fabric_leather_02': 'fabric_leather_02_diff_1k.jpg',
         'green_rough_planks': 'green_rough_planks_diff_1k.jpg',
         # Adicione outros mapeamentos conforme necessário
