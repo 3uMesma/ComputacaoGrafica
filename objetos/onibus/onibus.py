@@ -170,7 +170,7 @@ def load_obj_and_texture(objFile, textures_path):
             target['verts'].append(modelo['vertices'][v_idx-1])
             target['tex_coords'].append(modelo['texture'][t_idx-1])
 
-    # Concatena todos os vértices na ordem correta
+    # Concatena todos os vértices
     material_order = ['bus', 'base2', 'glass']
     for mat in material_order:
         vertices_list.extend(material_data[mat]['verts'])
@@ -202,7 +202,7 @@ def load_obj_and_texture(objFile, textures_path):
     
     return material_groups, texture_ids
 
-# carrega caixa (modelo e texturas)
+# carrega ônibus (modelo e texturas)
 material_groups, texture_ids = load_obj_and_texture(
     'onibus.obj',
     'texturas/'
@@ -214,7 +214,7 @@ def desenha_onibus(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z, material_
     loc_model = glGetUniformLocation(program, "model")
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
     
-    # Ordem de renderização corrigida
+    # Ordem de renderização
     for material in ['bus', 'base2', 'glass']:
         group = material_groups[material]
         
@@ -234,7 +234,7 @@ def desenha_onibus(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z, material_
 
 buffer_VBO = glGenBuffers(2)
 
-# Configuração dos buffers (apenas uma vez!)
+# Configuração dos buffers 
 vertices = np.array(vertices_list, dtype=np.float32)
 textures = np.array(textures_coord_list, dtype=np.float32)
 
@@ -263,24 +263,20 @@ print("\nTexturas carregadas:")
 for name, tex_id in texture_ids.items():
     print(f"{name}: ID {tex_id}")
 
-#cameraPos   = glm.vec3(0.0,  0.0,  1.0);
-#cameraFront = glm.vec3(0.0,  0.0, -1.0);
-#cameraUp    = glm.vec3(0.0,  1.0,  0.0);
-
 # camera
 cameraPos   = glm.vec3(0.0, 0.0, 3.0)
 cameraFront = glm.vec3(0.0, 0.0, -1.0)
 cameraUp    = glm.vec3(0.0, 1.0, 0.0)
 
 firstMouse = True
-yaw   = -90.0	# yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
+yaw   = -90.0
 pitch =  0.0
 lastX =  largura / 2.0
 lastY =  altura / 2.0
 fov   =  45.0
 
 # timing
-deltaTime = 0.0	# time between current frame and last frame
+deltaTime = 0.0
 lastFrame = 0.0
 
 
@@ -315,13 +311,9 @@ def key_event(window,key,scancode,action,mods):
         
 
 def framebuffer_size_callback(window, largura, altura):
-
-    # make sure the viewport matches the new window dimensions note that width and 
-    # height will be significantly larger than specified on retina displays.
     glViewport(0, 0, largura, altura)
 
-# glfw: whenever the mouse moves, this callback is called
-# -------------------------------------------------------
+
 def mouse_callback(window, xpos, ypos):
     global cameraFront, lastX, lastY, firstMouse, yaw, pitch
    
@@ -332,18 +324,17 @@ def mouse_callback(window, xpos, ypos):
         firstMouse = False
 
     xoffset = xpos - lastX
-    yoffset = lastY - ypos # reversed since y-coordinates go from bottom to top
+    yoffset = lastY - ypos
     lastX = xpos
     lastY = ypos
 
-    sensitivity = 0.1 # change this value to your liking
+    sensitivity = 0.1
     xoffset *= sensitivity
     yoffset *= sensitivity
 
     yaw += xoffset
     pitch += yoffset
 
-    # make sure that when pitch is out of bounds, screen doesn't get flipped
     if (pitch > 89.0):
         pitch = 89.0
     if (pitch < -89.0):
@@ -355,8 +346,6 @@ def mouse_callback(window, xpos, ypos):
     front.z = glm.sin(glm.radians(yaw)) * glm.cos(glm.radians(pitch))
     cameraFront = glm.normalize(front)
 
-# glfw: whenever the mouse scroll wheel scrolls, this callback is called
-# ----------------------------------------------------------------------
 def scroll_callback(window, xoffset, yoffset):
     global fov
 
@@ -371,7 +360,6 @@ glfw.set_framebuffer_size_callback(window, framebuffer_size_callback)
 glfw.set_cursor_pos_callback(window, mouse_callback)
 glfw.set_scroll_callback(window, scroll_callback)
 
-# tell GLFW to capture our mouse
 glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
 
 def model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z):
@@ -402,7 +390,6 @@ def view():
 
 def projection():
     global altura, largura
-    # perspective parameters: fovy, aspect, near, far
     mat_projection = glm.perspective(glm.radians(fov), largura/altura, 0.1, 100.0)
 
     

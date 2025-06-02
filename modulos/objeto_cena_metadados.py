@@ -4,7 +4,14 @@ from modulos.objeto_cena import GenericObj
 # Essa classe contém uma instância de Generic
 class ObjectMetadata(GenericObj):
     def __init__(self, name, obj_file, textures_map, shader_program, **transform):
-        super().__init__(obj_file, f"objetos/{name}/texturas/", textures_map, shader_program)
+        self.name = name
+        self.emissive = transform.pop('_emissive', False)
+        self.emissive_color = transform.pop('_emissive_color', glm.vec3(1.0, 1.0, 0.0))
+        self.emissive_power = transform.pop('_emissive_power', 1.0)
+        
+        # Passe o nome da pasta baseado no nome do objeto
+        textures_folder = f"objetos/{self.name}/texturas/"
+        super().__init__(obj_file, textures_folder, textures_map, shader_program)
         self.transform = transform
     def get_pos(self):
         return glm.vec3(self.transform['tx'], self.transform['ty'], self.transform['tz'])
@@ -24,8 +31,6 @@ def gen_scene_objects(shader_program):
     Gera objetos da cena com metadados.
     shader_program: programa de shader a ser usado para todos os objetos
     """
-    # aqui você pode adicionar mais objetos, se quiser
-    # ou mesmo criar uma função que gere os objetos a partir de um arquivo de configuração
     return [
             ObjectMetadata(
                 name="placa",
@@ -35,7 +40,6 @@ def gen_scene_objects(shader_program):
                     'Road_Sign_-_Pare': 'Road Sign - Pare_color.png'
                 },
                 shader_program=shader_program,
-                # agora passam direto os args:
                 angle=0, rx=0, ry=1, rz=0,
                 tx=-7, ty=-1, tz=30,
                 sx=1.8, sy=1.8, sz=1.8
@@ -133,5 +137,16 @@ def gen_scene_objects(shader_program):
                 angle=0, rx=0, ry=1, rz=0,
                 tx=0, ty=-1, tz=0,
                 sx=0.01, sy=0.01, sz=0.01
+            ),
+            ObjectMetadata(
+                name="farol",
+                obj_file="",
+                textures_map={'default': None},
+                shader_program=shader_program,
+                angle=0, rx=0, ry=0, rz=0,
+                tx=0, ty=0, tz=0,
+                sx=0.1, sy=0.1, sz=0.1,
+                _emissive=True,
+                _emissive_color=glm.vec3(1.0, 1.0, 0.8)
             )
         ]
