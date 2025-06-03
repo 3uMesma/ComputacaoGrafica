@@ -20,9 +20,8 @@ kd = 0.7  # Coeficiente de reflexão difusa
 ks = 0.5  # Coeficiente de reflexão especular
 ns = 32.0  # Expoente de reflexão especular
 lightPos = glm.vec3(0.0, 0.0, 0.0)
-luz_ambiente_ligada = True  # Adicione esta variável para controle
+luz_ambiente_ligada = True
 luz_ambiente_power = 2.0
-lightPos = glm.vec3(0.0, 0.0, 0.0)
 luz_farol_ligada = True
 
 cameraPos   = glm.vec3(0.0,  0.0,  15.0)
@@ -54,7 +53,6 @@ DELTA_TEMPORAL_PLACA = 0.05
 p_pressed = False
 wireframe = False
 
-
 def init_window():
     if not glfw.init():
         raise RuntimeError("Falha ao inicializar GLFW")
@@ -67,26 +65,54 @@ def init_window():
     glfw.make_context_current(window)
     return window
 
-def update_farol_position(scene_objects):
+def update_bus_position(scene_objects, offsets_iniciais):
     global lightPos, busPos, busYaw
     
-    farol = scene_objects[8]  # Assumindo que o farol está no índice 8
-    farol.position_offset = glm.vec3(-0.5, 0.5, -1.5)
-    farol.light_direction = glm.vec3(0.0, 0.0, -1.0)
-    farol.light_cutoff = glm.cos(glm.radians(15.0))  # Ângulo mais estreito (15 graus)
-    farol.light_power = 30.0  # Potência aumentada
+    # --- Atualiza o ônibus principal ---
+    onibus = scene_objects[2]
+    onibus.transform['tx'] = float(busPos.x)
+    onibus.transform['ty'] = float(busPos.y)
+    onibus.transform['tz'] = float(busPos.z)
+    onibus.transform['angle'] = float(busYaw)  # Atualiza rotação
+    
+    # Atualiza os faróis
+    farol_direito = scene_objects[8]
+    farol_esquerdo = scene_objects[9]
+    
+    for farol in [farol_direito, farol_esquerdo]:
+        farol.light_direction = glm.vec3(0.0, 0.0, 1.0)
+        farol.light_cutoff = glm.cos(glm.radians(15.0))
+        farol.light_power = 30.0
+    
+    farol_direito.position_offset = glm.vec3(-1.25, 1.0, 6.25)
+    farol_esquerdo.position_offset = glm.vec3(1.25, 1.0, 6.25)
     
     rot_mat = glm.rotate(glm.mat4(1.0), glm.radians(busYaw), glm.vec3(0.0, 1.0, 0.0))
     
-    # Atualiza posição
-    rotated_offset = glm.vec3(rot_mat * glm.vec4(farol.position_offset, 1.0))
-    farol.transform['tx'] = busPos.x + rotated_offset.x
-    farol.transform['ty'] = busPos.y + rotated_offset.y
-    farol.transform['tz'] = busPos.z + rotated_offset.z
-    lightPos = glm.vec3(farol.transform['tx'], farol.transform['ty'], farol.transform['tz'])
-    
-    # Atualiza direção do farol
-    farol.light_direction = glm.vec3(rot_mat * glm.vec4(0.0, 0.0, -1.0, 0.0))
+    for farol in [farol_direito, farol_esquerdo]:
+        rotated_offset = glm.vec3(rot_mat * glm.vec4(farol.position_offset, 1.0))
+        farol.transform['tx'] = float(busPos.x + rotated_offset.x)
+        farol.transform['ty'] = float(busPos.y + rotated_offset.y)
+        farol.transform['tz'] = float(busPos.z + rotated_offset.z)
+        farol.light_direction = glm.vec3(rot_mat * glm.vec4(0.0, 0.0, 1.0, 0.0))
+
+    # atualiza os objetos dentro do ônibus
+    ind_objs_onibus = [1, 5, 6] 
+    scene_objects[2].seta_pos(busPos)
+    scene_objects[2].transform['angle'] = busYaw
+
+    # Atualiza objetos dentro do ônibus
+    rot_mat = glm.rotate(glm.mat4(1.0), glm.radians(busYaw), glm.vec3(0.0, 1.0, 0.0))
+    for ind_obj, ind_arr in enumerate(ind_objs_onibus):
+        # Posição relativa (com rotação aplicada)
+        pos_relativa = glm.vec3(rot_mat * glm.vec4(offsets_iniciais[ind_obj], 1.0))
+        
+        # Nova posição absoluta (ônibus + posição relativa)
+        nova_pos = busPos + pos_relativa
+        
+        # Atualiza o objeto
+        scene_objects[ind_arr].seta_pos(nova_pos)
+        scene_objects[ind_arr].transform['angle'] = busYaw
 
 def mexe_onibus(fwd, yaw):
     global busPos, busYaw
@@ -267,11 +293,6 @@ def main():
         glfw.terminate()
         return
 
-    # Debug: lista todos os uniforms
-    num_uniforms = glGetProgramiv(program, GL_ACTIVE_UNIFORMS)
-    for i in range(num_uniforms):
-        name, size, type = glGetActiveUniform(program, i)
-
     # carrega outros shaders
     skyboxShader = criar_shader("shaders/skybox.vs", "shaders/skybox.fs")
     floor_program = criar_shader("shaders/floor_shader.vs", "shaders/floor_shader.fs")
@@ -281,6 +302,16 @@ def main():
     busPos = glm.vec3(-2.6, -0.99, 9.5)
     lightPos = busPos
     cameraPos.z += 40
+
+    ind_objs_onibus = [1, 5, 6]  # Índices dos objetos dentro do ônibus (pessoa, celular, mochila)
+    offsets_inicais = []
+
+    # Calcula a posição relativa inicial de cada objeto em relação ao ônibus
+    for ind_obj in ind_objs_onibus:
+        pos_obj = scene_objects[ind_obj].get_pos()
+        pos_onibus = scene_objects[2].get_pos() # 2 é a posição do onibus no vetor
+        offset = pos_obj - pos_onibus
+        offsets_inicais.append(offset)
 
     # configura skybox e chão
     skyboxVAO, cubemapTexture = init_skybox(skyboxShader)
@@ -295,7 +326,7 @@ def main():
         lastFrame = currentFrame
 
         process_input(window)
-        update_farol_position(scene_objects)
+        update_bus_position(scene_objects, offsets_inicais)
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glClearColor(1.0, 1.0, 1.0, 1.0)
@@ -324,22 +355,29 @@ def main():
             print(f"CORREÇÃO: Shader errado ativo! Ativando {program}")
             glUseProgram(program)
 
-        farol = scene_objects[8]
+        farol_direito = scene_objects[8]
+        farol_esquerdo = scene_objects[9]
 
         # set de on/off luz do farol
-        print("luzFarolLigada: ", luz_farol_ligada)
         glUniform1i(glGetUniformLocation(program, "luzFarolLigada"), luz_farol_ligada)
 
-        glUniform3f(glGetUniformLocation(program, "lightPos"), 
-                farol.transform['tx'], 
-                farol.transform['ty'], 
-                farol.transform['tz'])
-        glUniform3f(glGetUniformLocation(program, "lightDir"),
-                farol.light_direction.x,
-                farol.light_direction.y, 
-                farol.light_direction.z)
-        glUniform1f(glGetUniformLocation(program, "lightCutOff"), farol.light_cutoff)
-        glUniform1f(glGetUniformLocation(program, "lightPower"), farol.light_power)
+        for i, farol in enumerate([farol_direito, farol_esquerdo], start=1):
+            # Define os uniforms para cada farol
+            glUniform3f(glGetUniformLocation(program, f"lightPos{i}"), 
+                        farol.transform['tx'], 
+                        farol.transform['ty'], 
+                        farol.transform['tz'])
+            
+            glUniform3f(glGetUniformLocation(program, f"lightDir{i}"),
+                        farol.light_direction.x,
+                        farol.light_direction.y, 
+                        farol.light_direction.z)
+            
+            # Parâmetros comuns (ou podem ser específicos por farol se necessário)
+            glUniform1f(glGetUniformLocation(program, "lightCutOff"), farol.light_cutoff)
+            glUniform1f(glGetUniformLocation(program, "lightPower"), farol.light_power)
+            
+            farol.draw(model_matrix_func=model_matrix, **farol.transform)
 
         # Configura todos os uniforms
         glUniform3f(glGetUniformLocation(program, "lightColor"), lightColor.x, lightColor.y, lightColor.z)
@@ -348,12 +386,6 @@ def main():
         glUniform1f(glGetUniformLocation(program, "kd"), kd)
         glUniform1f(glGetUniformLocation(program, "ks"), ks)
         glUniform1f(glGetUniformLocation(program, "ns"), ns)
-        farol.draw(model_matrix_func=model_matrix, **farol.transform)
-
-        # Restaure os materiais padrão para outros objetos
-        glUniform1f(glGetUniformLocation(program, "ka"), ka)
-        glUniform1f(glGetUniformLocation(program, "kd"), kd)
-        glUniform1f(glGetUniformLocation(program, "ks"), ks)
 
         # Configura uniforms de iluminação
         usar_shader(program)
@@ -375,7 +407,7 @@ def main():
 
         # Atualiza e renderiza objetos
         for i, objmeta in enumerate(scene_objects):
-            if i == 8:  # Farol
+            if i == 8 or i == 9:  # Farois
                 # Configura parâmetros específicos do farol
                 glUniform3f(glGetUniformLocation(program, "lightPos"), 
                         objmeta.transform['tx'], 

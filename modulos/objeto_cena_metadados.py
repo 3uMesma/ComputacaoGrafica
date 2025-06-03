@@ -139,7 +139,18 @@ def gen_scene_objects(shader_program):
                 sx=0.01, sy=0.01, sz=0.01
             ),
             ObjectMetadata(
-                name="farol",
+                name="farol_direito",
+                obj_file="",
+                textures_map={'default': None},
+                shader_program=shader_program,
+                angle=0, rx=0, ry=0, rz=0,
+                tx=0, ty=0, tz=0,
+                sx=0.1, sy=0.1, sz=0.1,
+                _emissive=True,
+                _emissive_color=glm.vec3(1.0, 1.0, 0.8)
+            ),
+            ObjectMetadata(
+                name="farol_esquerdo",
                 obj_file="",
                 textures_map={'default': None},
                 shader_program=shader_program,
