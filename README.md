@@ -34,6 +34,8 @@ Testado em linux e no windows. Os notebooks na pasta objetos servem só pra voc�
 Aperte setinha pra cima/pra baixo.
 - Obj2 - Ônibus (rotação). Aperte as setinhas pros lados
 - Obj3 - Placa de parar (escala). Segure o dígito 0 (serviria para "alertar" o ônibus)
+- Farol - tecla F liga e desliga os farois
+- Luz Ambiente - tecla L liga e desliga a luz ambiente
 
 **Notas:**
 

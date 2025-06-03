@@ -20,6 +20,10 @@ kd = 0.7  # Coeficiente de reflexão difusa
 ks = 0.5  # Coeficiente de reflexão especular
 ns = 32.0  # Expoente de reflexão especular
 lightPos = glm.vec3(0.0, 0.0, 0.0)
+luz_ambiente_ligada = True  # Adicione esta variável para controle
+luz_ambiente_power = 2.0
+lightPos = glm.vec3(0.0, 0.0, 0.0)
+luz_farol_ligada = True
 
 cameraPos   = glm.vec3(0.0,  0.0,  15.0)
 cameraFront = glm.vec3(0.0,  0.0, -1.0)
@@ -70,7 +74,7 @@ def update_farol_position(scene_objects):
     farol.position_offset = glm.vec3(-0.5, 0.5, -1.5)
     farol.light_direction = glm.vec3(0.0, 0.0, -1.0)
     farol.light_cutoff = glm.cos(glm.radians(15.0))  # Ângulo mais estreito (15 graus)
-    farol.light_power = 10.0  # Potência aumentada
+    farol.light_power = 30.0  # Potência aumentada
     
     rot_mat = glm.rotate(glm.mat4(1.0), glm.radians(busYaw), glm.vec3(0.0, 1.0, 0.0))
     
@@ -92,6 +96,7 @@ def mexe_onibus(fwd, yaw):
 def process_input(window):
     global cameraPos, cameraFront, cameraUp, deltaTime, placa_escala, parametro_temporal_placa, p_pressed, wireframe
     speed = 2.5 * deltaTime
+    global luz_ambiente_ligada, luz_ambiente_power, luz_farol_ligada  # Adicione estas variáveis globais
 
     if glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS:
         glfw.set_window_should_close(window, True)
@@ -135,6 +140,21 @@ def process_input(window):
             wireframe = not wireframe
     else:
         p_pressed = False
+
+    # Controle da luz ambiente (tecla L)
+    if glfw.get_key(window, glfw.KEY_L) == glfw.PRESS:
+        luz_ambiente_ligada = not luz_ambiente_ligada
+        print(f"Luz ambiente {'ligada' if luz_ambiente_ligada else 'desligada'}")
+        while glfw.get_key(window, glfw.KEY_L) == glfw.PRESS:  # Espera soltar a tecla
+            glfw.poll_events()
+
+    # Controle da luz do farol (tecla F)
+    if glfw.get_key(window, glfw.KEY_F) == glfw.PRESS:
+        luz_farol_ligada = not luz_farol_ligada
+        print(f"Luz farol {'ligada' if luz_farol_ligada else 'desligada'}")
+        while glfw.get_key(window, glfw.KEY_F) == glfw.PRESS:  # Espera soltar a tecla
+            glfw.poll_events()
+
 
 def mouse_callback(window, xpos, ypos):
     global firstMouse, lastX, lastY, yaw, pitch, cameraFront
@@ -256,9 +276,6 @@ def main():
     skyboxShader = criar_shader("shaders/skybox.vs", "shaders/skybox.fs")
     floor_program = criar_shader("shaders/floor_shader.vs", "shaders/floor_shader.fs")
 
-    lightDirection = glm.vec3(0.0, 0.0, -1.0)  # Direção padrão do farol
-    lightCutoff = glm.cos(glm.radians(30.0))    # Ângulo de 30 graus
-
     # inicializa cena
     scene_objects = gen_scene_objects(program)
     busPos = glm.vec3(-2.6, -0.99, 9.5)
@@ -308,6 +325,11 @@ def main():
             glUseProgram(program)
 
         farol = scene_objects[8]
+
+        # set de on/off luz do farol
+        print("luzFarolLigada: ", luz_farol_ligada)
+        glUniform1i(glGetUniformLocation(program, "luzFarolLigada"), luz_farol_ligada)
+
         glUniform3f(glGetUniformLocation(program, "lightPos"), 
                 farol.transform['tx'], 
                 farol.transform['ty'], 
@@ -332,6 +354,20 @@ def main():
         glUniform1f(glGetUniformLocation(program, "ka"), ka)
         glUniform1f(glGetUniformLocation(program, "kd"), kd)
         glUniform1f(glGetUniformLocation(program, "ks"), ks)
+
+        # Configura uniforms de iluminação
+        usar_shader(program)
+        
+        # Aplica o poder da luz ambiente
+        glUniform1f(glGetUniformLocation(program, "luzAmbientePower"), luz_ambiente_power)
+        glUniform1i(glGetUniformLocation(program, "luzAmbienteLigada"), luz_ambiente_ligada)
+        
+        # Configura outros parâmetros de iluminação
+        glUniform3f(glGetUniformLocation(program, "lightColor"), lightColor.x, lightColor.y, lightColor.z)
+        glUniform3f(glGetUniformLocation(program, "viewPos"), cameraPos.x, cameraPos.y, cameraPos.z)
+        glUniform1f(glGetUniformLocation(program, "kd"), kd)
+        glUniform1f(glGetUniformLocation(program, "ks"), ks)
+        glUniform1f(glGetUniformLocation(program, "ns"), ns)
 
         # Configura matrizes
         glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_TRUE, view_matrix())
