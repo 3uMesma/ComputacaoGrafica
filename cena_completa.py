@@ -24,7 +24,7 @@ luz_ambiente_ligada = True
 luz_ambiente_power = 2.0
 luz_farol_ligada = True
 
-cameraPos   = glm.vec3(0.0,  0.0,  15.0)
+cameraPos   = glm.vec3(0.0,  1.0,  15.0)
 cameraFront = glm.vec3(0.0,  0.0, -1.0)
 cameraUp    = glm.vec3(0.0,  1.0,  0.0)
 
@@ -122,19 +122,46 @@ def mexe_onibus(fwd, yaw):
 def process_input(window):
     global cameraPos, cameraFront, cameraUp, deltaTime, placa_escala, parametro_temporal_placa, p_pressed, wireframe
     speed = 2.5 * deltaTime
-    global luz_ambiente_ligada, luz_ambiente_power, luz_farol_ligada  # Adicione estas variáveis globais
+    global luz_ambiente_ligada, luz_ambiente_power, luz_farol_ligada
 
     if glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS:
         glfw.set_window_should_close(window, True)
+
+    # Limites da câmera
+    max_x = 10.0
+    min_x = -10.0
+    max_y = 30.0
+    min_y = 0.0
+    min_z = -50.0
+    max_z = 50.0
+
+    # movimentando a camera
+    new_pos = cameraPos
+    print("CameraPos:", new_pos)
     if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS:
-        cameraPos += speed * cameraFront
+        new_pos = cameraPos + speed * cameraFront
+            
     if glfw.get_key(window, glfw.KEY_S) == glfw.PRESS:
-        cameraPos -= speed * cameraFront
+        new_pos = cameraPos - speed * cameraFront
+            
     if glfw.get_key(window, glfw.KEY_A) == glfw.PRESS:
-        cameraPos -= glm.normalize(glm.cross(cameraFront, cameraUp)) * speed
+        new_pos = cameraPos - glm.normalize(glm.cross(cameraFront, cameraUp)) * speed
+            
     if glfw.get_key(window, glfw.KEY_D) == glfw.PRESS:
-        cameraPos += glm.normalize(glm.cross(cameraFront, cameraUp)) * speed
-    
+        new_pos = cameraPos + glm.normalize(glm.cross(cameraFront, cameraUp)) * speed
+
+    # verificando se ele ultrapasosu o limite da cena
+    if not (
+        new_pos.x > max_x or 
+        new_pos.x < min_x or
+        new_pos.y > max_y or
+        new_pos.y < min_y or
+        new_pos.z > max_z or
+        new_pos.z < min_z
+    ):
+        print("Mudou a cameraPos")
+        cameraPos = new_pos
+
     global busPos, busYaw
     speed = 2.5 * deltaTime
     # translação frente/trás (eixo local Z do ônibus)
@@ -301,7 +328,7 @@ def main():
     scene_objects = gen_scene_objects(program)
     busPos = glm.vec3(-2.6, -0.99, 9.5)
     lightPos = busPos
-    cameraPos.z += 40
+    cameraPos.z += 35
 
     ind_objs_onibus = [1, 5, 6]  # Índices dos objetos dentro do ônibus (pessoa, celular, mochila)
     offsets_inicais = []
