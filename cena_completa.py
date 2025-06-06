@@ -84,8 +84,8 @@ def update_bus_position(scene_objects, offsets_iniciais):
         farol.light_cutoff = glm.cos(glm.radians(15.0))
         farol.light_power = 30.0
     
-    farol_direito.position_offset = glm.vec3(-1.25, 1.0, 6.25)
-    farol_esquerdo.position_offset = glm.vec3(1.25, 1.0, 6.25)
+    farol_direito.position_offset = glm.vec3(-1.25, 1.30, 6.0)
+    farol_esquerdo.position_offset = glm.vec3(1.25, 1.30, 6.0)
     
     rot_mat = glm.rotate(glm.mat4(1.0), glm.radians(busYaw), glm.vec3(0.0, 1.0, 0.0))
     
@@ -97,7 +97,7 @@ def update_bus_position(scene_objects, offsets_iniciais):
         farol.light_direction = glm.vec3(rot_mat * glm.vec4(0.0, 0.0, 1.0, 0.0))
 
     # atualiza os objetos dentro do ônibus
-    ind_objs_onibus = [1, 5, 6] 
+    ind_objs_onibus = [1, 5, 6, 10, 11]  # Índices dos objetos dentro do ônibus (pessoa, mochila, mala, luz_onibus, fone) 
     scene_objects[2].seta_pos(busPos)
     scene_objects[2].transform['angle'] = busYaw
 
@@ -114,15 +114,72 @@ def update_bus_position(scene_objects, offsets_iniciais):
         scene_objects[ind_arr].seta_pos(nova_pos)
         scene_objects[ind_arr].transform['angle'] = busYaw
 
+        # Ajuste adicional só para o headset
+        if ind_arr == 11:  # fone_ouvido
+            # Levemente abaixo do pescoço
+            scene_objects[ind_arr].transform['ty'] += 0.10
+            scene_objects[ind_arr].transform['tz'] += 0.05
+            # Pequena rotação para parecer pendurado
+            scene_objects[ind_arr].transform['angle'] -= 90
+            scene_objects[ind_arr].transform['rx'] = 1
+            scene_objects[ind_arr].transform['ry'] = 0
+            scene_objects[ind_arr].transform['rz'] = 0
+
+        if ind_arr == 10: # lampada_onibus
+            scene_objects[ind_arr].transform['angle'] -= 180
+            scene_objects[ind_arr].transform['rx'] = 1
+
 def mexe_onibus(fwd, yaw):
     global busPos, busYaw
     busPos += fwd
     busYaw += yaw
 
-def process_input(window):
+def get_bbox(obj_pos, offset):
+    """Retorna uma bounding box baseada na posição do objeto + offset"""
+    return {
+        'min_x': obj_pos.x - offset,
+        'max_x': obj_pos.x + offset,
+        'min_y': obj_pos.y - offset,
+        'max_y': obj_pos.y + offset,
+        'min_z': obj_pos.z - offset,
+        'max_z': obj_pos.z + offset
+    }
+
+def process_input(window, obstaculos):
     global cameraPos, cameraFront, cameraUp, deltaTime, placa_escala, parametro_temporal_placa, p_pressed, wireframe
     speed = 2.5 * deltaTime
     global luz_ambiente_ligada, luz_ambiente_power, luz_farol_ligada
+    global busPos, busYaw
+
+    speed = 2.5 * deltaTime
+    # translação frente/trás (eixo local Z do ônibus)
+    forward = glm.vec3(
+        math.sin(glm.radians(busYaw)),
+        0,
+        math.cos(glm.radians(busYaw))
+    )
+    
+    # Movimento proposto
+    new_pos = busPos
+    if glfw.get_key(window, glfw.KEY_UP) == glfw.PRESS:
+        new_pos = busPos + forward * speed
+    elif glfw.get_key(window, glfw.KEY_DOWN) == glfw.PRESS:
+        new_pos = busPos - forward * speed
+    
+    # Verifica colisão com cada obstáculo
+    colisao = False
+    hitbox_margin = 2.0
+    for bbox in obstaculos:
+        if (bbox['min_x'] - hitbox_margin <= new_pos.x <= bbox['max_x'] + hitbox_margin and
+            bbox['min_y'] <= new_pos.y <= bbox['max_y'] and
+            bbox['min_z'] <= new_pos.z <= bbox['max_z']):
+            colisao = True
+            print(f"Colisão com objeto em {bbox}!")
+            break
+
+    if not colisao:
+        busPos = new_pos
+
 
     if glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS:
         glfw.set_window_should_close(window, True)
@@ -137,7 +194,6 @@ def process_input(window):
 
     # movimentando a camera
     new_pos = cameraPos
-    print("CameraPos:", new_pos)
     if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS:
         new_pos = cameraPos + speed * cameraFront
             
@@ -159,22 +215,17 @@ def process_input(window):
         new_pos.z > max_z or
         new_pos.z < min_z
     ):
-        print("Mudou a cameraPos")
         cameraPos = new_pos
 
-    global busPos, busYaw
-    speed = 2.5 * deltaTime
-    # translação frente/trás (eixo local Z do ônibus)
-    forward = glm.vec3(
-        math.sin(glm.radians(busYaw)),
-        0,
-        math.cos(glm.radians(busYaw))
-    )
-
-    if glfw.get_key(window, glfw.KEY_UP) == glfw.PRESS:
-        mexe_onibus(forward * speed, 0)
-    if glfw.get_key(window, glfw.KEY_DOWN) == glfw.PRESS:
-        mexe_onibus(-forward * speed, 0)
+    if not colisao:
+        if glfw.get_key(window, glfw.KEY_UP) == glfw.PRESS:
+            mexe_onibus(forward * speed, 0)
+        if glfw.get_key(window, glfw.KEY_DOWN) == glfw.PRESS:
+            mexe_onibus(-forward * speed, 0)
+        if glfw.get_key(window, glfw.KEY_UP) == glfw.PRESS:
+            mexe_onibus(forward * speed, 0)
+        if glfw.get_key(window, glfw.KEY_DOWN) == glfw.PRESS:
+            mexe_onibus(-forward * speed, 0)
     
     if glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS:
         mexe_onibus(glm.vec3(0, 0, 0), -60 * deltaTime)
@@ -330,7 +381,24 @@ def main():
     lightPos = busPos
     cameraPos.z += 35
 
-    ind_objs_onibus = [1, 5, 6]  # Índices dos objetos dentro do ônibus (pessoa, celular, mochila)
+    # Definindo as posições
+    placa_pos = scene_objects[0].get_pos()
+    ponto_onibus_pos = scene_objects[3].get_pos()
+    pessoa_telefone_pos = scene_objects[4].get_pos()
+
+    # Definindo as hitboxes individualmente
+    placa_bbox = get_bbox(placa_pos, offset=2.0)
+    ponto_onibus_bbox = get_bbox(ponto_onibus_pos, offset=2.0)
+    pessoa_telefone_bbox = get_bbox(pessoa_telefone_pos, offset=2.0)
+
+    # Colocando em uma lista
+    obstaculos = [
+        placa_bbox,
+        ponto_onibus_bbox,
+        pessoa_telefone_bbox
+    ]
+
+    ind_objs_onibus = [1, 5, 6, 10, 11]  # Índices dos objetos dentro do ônibus (pessoa, mochila, mala, luz_onibus, fone)
     offsets_inicais = []
 
     # Calcula a posição relativa inicial de cada objeto em relação ao ônibus
@@ -339,6 +407,8 @@ def main():
         pos_onibus = scene_objects[2].get_pos() # 2 é a posição do onibus no vetor
         offset = pos_obj - pos_onibus
         offsets_inicais.append(offset)
+
+
 
     # configura skybox e chão
     skyboxVAO, cubemapTexture = init_skybox(skyboxShader)
@@ -352,7 +422,7 @@ def main():
         deltaTime = currentFrame - lastFrame
         lastFrame = currentFrame
 
-        process_input(window)
+        process_input(window, obstaculos)
         update_bus_position(scene_objects, offsets_inicais)
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)

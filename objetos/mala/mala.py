@@ -160,7 +160,7 @@ def load_obj_and_texture(objFile, textures_path):
     # Carrega texturas da mala
     texture_ids = {}
     textures_to_load = {
-        'BaseColor': textures_path + '2_MIRORAPPLY_UV_Material.003_BaseColor.png',
+        'Material.001': textures_path + '2_MIRORAPPLY_UV_Material.003_BaseColor.png',
         'Normal': textures_path + '2_MIRORAPPLY_UV_Material.003_Normal.png',
         'Metallic': textures_path + '2_MIRORAPPLY_UV_Material.003_Metallic.png',
         'Height': textures_path + '2_MIRORAPPLY_UV_Material.003_Height.png'

@@ -51,3 +51,5 @@ Links para as texturas/objetos:
 - [Parada de ônibus](https://www.cgtrader.com/free-3d-models/exterior/exterior-public/bus-stop-359b8be2-faf9-4448-b88f-913475964f7a)
 - [Skybox](https://opengameart.org/content/miramar-skybox)
 - [Textura do chão](https://www.textures4photoshop.com/tex/ground-dirt-and-sand/earth-soil-ground-texture-seamless-free.aspx)
+- [Fone de ouvido](https://www.cgtrader.com/free-3d-models/electronics/audio/beats-studio-3)
+- [Lâmpada do ônibus](https://www.cgtrader.com/free-3d-models/architectural/lighting/light-bulb-7097f42f-5af3-402f-aa9f-4c9f3a1b7769)

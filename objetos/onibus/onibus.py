@@ -224,9 +224,6 @@ def desenha_onibus(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z, material_
         
         glBindTexture(GL_TEXTURE_2D, texture_ids[material])
         glDrawArrays(GL_TRIANGLES, group['start'], group['count'])
-        
-        if material == 'glass':
-            glDisable(GL_BLEND)
 
 
 

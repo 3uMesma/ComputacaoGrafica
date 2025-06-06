@@ -145,70 +145,76 @@ def load_obj_and_texture(objFile, textures_path):
     textures_coord_list = []
     numberTextures = 0
     
-    # Processa todas as faces
+    # Dicionário para agrupar por material
+    material_data = {
+        'LightBulb': {'verts': [], 'tex_coords': []},
+    }
+
+    # Classifica cada face no material correto
     for face in modelo['faces']:
+        material = face[2]  # Get the material name as is
+        
         verts = circular_sliding_window_of_three(face[0])
         tex_coords = circular_sliding_window_of_three(face[1])
         
+        # Default to LightBulb if material not recognized
+        target = material_data['LightBulb']
+        
         for v_idx, t_idx in zip(verts, tex_coords):
-            vertices_list.append(modelo['vertices'][v_idx-1])
-            textures_coord_list.append(modelo['texture'][t_idx-1] if t_idx > 0 else [0.0, 0.0])
+            target['verts'].append(modelo['vertices'][v_idx-1])
+            target['tex_coords'].append(modelo['texture'][t_idx-1])
 
-    material_groups = {
-        'mochila': {
-            'start': 0,
-            'count': len(vertices_list)
+    # Concatena todos os vértices
+    material_order = ['LightBulb']
+    for mat in material_order:
+        vertices_list.extend(material_data[mat]['verts'])
+        textures_coord_list.extend(material_data[mat]['tex_coords'])
+
+    # Calcula os intervalos
+    material_groups = {}
+    start = 0
+    for mat in material_order:
+        count = len(material_data[mat]['verts'])
+        material_groups[mat] = {
+            'start': start,
+            'count': count
         }
-    }
+        start += count
     
-    # Carrega texturas da mochila
+    # Carrega texturas
     texture_ids = {}
-    textures_to_load = {
-        'backpack': textures_path + 'backpack_backpack_BaseColor.png',
-        'Normal': textures_path + 'backpack_backpack_Normal.png',
-        'Metallic': textures_path + 'backpack_backpack_Metallic.png',
-        'Height': textures_path + 'backpack_backpack_Height.png'
-    }
+    textures_to_load = [
+        ('LightBulb', 'LightBulbAO.png')
+    ]
     
-    for tex_type, tex_path in textures_to_load.items():
-        try:
-            load_texture_from_file(numberTextures, tex_path)
-            texture_ids[tex_type] = numberTextures
-            numberTextures += 1
-        except Exception as e:
-            print(f"Erro ao carregar textura {tex_type}: {str(e)}")
-            texture_ids[tex_type] = 0
+    for name, file in textures_to_load:
+        load_texture_from_file(numberTextures, textures_path + file)
+        texture_ids[name] = numberTextures
+        numberTextures += 1
     
     return material_groups, texture_ids
 
-# carrega caixa (modelo e texturas)
+# carrega ônibus (modelo e texturas)
 material_groups, texture_ids = load_obj_and_texture(
-    'backpack.obj',
+    'LightBulb.obj',
     'texturas/'
 )
 
 
-def desenha_mochila(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z, material_groups, texture_ids):
+def desenha_luz(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z, material_groups, texture_ids):
     mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     loc_model = glGetUniformLocation(program, "model")
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
     
-    # Configura as texturas para o shader PBR
-    glActiveTexture(GL_TEXTURE0)
-    glBindTexture(GL_TEXTURE_2D, texture_ids['BaseColor'])
-    glUniform1i(glGetUniformLocation(program, "baseColorTexture"), 0)
-    
-    glActiveTexture(GL_TEXTURE1)
-    glBindTexture(GL_TEXTURE_2D, texture_ids['Normal'])
-    glUniform1i(glGetUniformLocation(program, "normalTexture"), 1)
-    
-    glActiveTexture(GL_TEXTURE2)
-    glBindTexture(GL_TEXTURE_2D, texture_ids['Metallic'])
-    glUniform1i(glGetUniformLocation(program, "metallicTexture"), 2)
-    
-    # Desenha o objeto
-    for material in material_groups.keys():
+    # Ordem de renderização
+    for material in ['LightBulb']:
         group = material_groups[material]
+        
+        if material == 'glass':
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        
+        glBindTexture(GL_TEXTURE_2D, texture_ids[material])
         glDrawArrays(GL_TRIANGLES, group['start'], group['count'])
 
 
@@ -217,7 +223,7 @@ def desenha_mochila(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z, material
 
 buffer_VBO = glGenBuffers(2)
 
-# Configuração dos buffers (apenas uma vez!)
+# Configuração dos buffers 
 vertices = np.array(vertices_list, dtype=np.float32)
 textures = np.array(textures_coord_list, dtype=np.float32)
 
@@ -246,24 +252,20 @@ print("\nTexturas carregadas:")
 for name, tex_id in texture_ids.items():
     print(f"{name}: ID {tex_id}")
 
-#cameraPos   = glm.vec3(0.0,  0.0,  1.0);
-#cameraFront = glm.vec3(0.0,  0.0, -1.0);
-#cameraUp    = glm.vec3(0.0,  1.0,  0.0);
-
 # camera
 cameraPos   = glm.vec3(0.0, 0.0, 3.0)
 cameraFront = glm.vec3(0.0, 0.0, -1.0)
 cameraUp    = glm.vec3(0.0, 1.0, 0.0)
 
 firstMouse = True
-yaw   = -90.0	# yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
+yaw   = -90.0
 pitch =  0.0
 lastX =  largura / 2.0
 lastY =  altura / 2.0
 fov   =  45.0
 
 # timing
-deltaTime = 0.0	# time between current frame and last frame
+deltaTime = 0.0
 lastFrame = 0.0
 
 
@@ -298,13 +300,9 @@ def key_event(window,key,scancode,action,mods):
         
 
 def framebuffer_size_callback(window, largura, altura):
-
-    # make sure the viewport matches the new window dimensions note that width and 
-    # height will be significantly larger than specified on retina displays.
     glViewport(0, 0, largura, altura)
 
-# glfw: whenever the mouse moves, this callback is called
-# -------------------------------------------------------
+
 def mouse_callback(window, xpos, ypos):
     global cameraFront, lastX, lastY, firstMouse, yaw, pitch
    
@@ -315,18 +313,17 @@ def mouse_callback(window, xpos, ypos):
         firstMouse = False
 
     xoffset = xpos - lastX
-    yoffset = lastY - ypos # reversed since y-coordinates go from bottom to top
+    yoffset = lastY - ypos
     lastX = xpos
     lastY = ypos
 
-    sensitivity = 0.1 # change this value to your liking
+    sensitivity = 0.1
     xoffset *= sensitivity
     yoffset *= sensitivity
 
     yaw += xoffset
     pitch += yoffset
 
-    # make sure that when pitch is out of bounds, screen doesn't get flipped
     if (pitch > 89.0):
         pitch = 89.0
     if (pitch < -89.0):
@@ -338,8 +335,6 @@ def mouse_callback(window, xpos, ypos):
     front.z = glm.sin(glm.radians(yaw)) * glm.cos(glm.radians(pitch))
     cameraFront = glm.normalize(front)
 
-# glfw: whenever the mouse scroll wheel scrolls, this callback is called
-# ----------------------------------------------------------------------
 def scroll_callback(window, xoffset, yoffset):
     global fov
 
@@ -354,7 +349,6 @@ glfw.set_framebuffer_size_callback(window, framebuffer_size_callback)
 glfw.set_cursor_pos_callback(window, mouse_callback)
 glfw.set_scroll_callback(window, scroll_callback)
 
-# tell GLFW to capture our mouse
 glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
 
 def model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z):
@@ -385,7 +379,6 @@ def view():
 
 def projection():
     global altura, largura
-    # perspective parameters: fovy, aspect, near, far
     mat_projection = glm.perspective(glm.radians(fov), largura/altura, 0.1, 100.0)
 
     
@@ -397,14 +390,6 @@ glfw.show_window(window)
 glEnable(GL_DEPTH_TEST) ### importante para 3D
 polygonal_mode = False 
 
-# Após compilar o programa do shader:
-baseColor_loc = glGetUniformLocation(program, "baseColorTexture")
-normal_loc = glGetUniformLocation(program, "normalTexture")
-metallic_loc = glGetUniformLocation(program, "metallicTexture")
-
-if baseColor_loc == -1 or normal_loc == -1 or metallic_loc == -1:
-    print("ERRO: Uniforms do shader não encontrados! Verifique os nomes no shader")
-    
 while not glfw.window_should_close(window):
 
     currentFrame = glfw.get_time()
@@ -423,7 +408,7 @@ while not glfw.window_should_close(window):
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL)
 
     
-    desenha_mochila(0.0, 0, 1, 0, 0, 0, -10, 2.0, 2.0, 2.0, material_groups, texture_ids)
+    desenha_luz(0.0, 0, 1, 0, 0, 0, -10, 1.0, 1.0, 1.0, material_groups, texture_ids)
     
     mat_view = view()
     loc_view = glGetUniformLocation(program, "view")

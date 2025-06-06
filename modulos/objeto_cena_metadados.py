@@ -87,7 +87,7 @@ def gen_scene_objects(shader_program):
                 name='pessoa_telefone',
                 obj_file='objetos/pessoa_telefone/pessoa_telefone.obj',
                 textures_map={
-                    'diff': 'diff.jpg',
+                    'wire_diff_phone': 'diff.jpg',
                     'phone': 'phone.jpg'
                 },
                 shader_program=shader_program,
@@ -99,7 +99,7 @@ def gen_scene_objects(shader_program):
                 name='mochila',
                 obj_file='objetos/mochila/backpack.obj',
                 textures_map={
-                    'BaseColor': 'backpack_backpack_BaseColor.png',
+                    'backpack': 'backpack_backpack_BaseColor.png',
                     'Normal': 'backpack_backpack_Normal.png',
                     'Metallic': 'backpack_backpack_Metallic.png',
                     'Height': 'backpack_backpack_Height.png'
@@ -113,7 +113,7 @@ def gen_scene_objects(shader_program):
                 name='mala',
                 obj_file='objetos/mala/Suitcase_Grey_London.obj',
                 textures_map={
-                    'BaseColor': '2_MIRORAPPLY_UV_Material.003_BaseColor.png',
+                    'Material.001': '2_MIRORAPPLY_UV_Material.003_BaseColor.png',
                     'Normal': '2_MIRORAPPLY_UV_Material.003_Normal.png',
                     'Metallic': '2_MIRORAPPLY_UV_Material.003_Metallic.png',
                     'Height': '2_MIRORAPPLY_UV_Material.003_Height.png'
@@ -158,6 +158,32 @@ def gen_scene_objects(shader_program):
                 tx=0, ty=0, tz=0,
                 sx=0.1, sy=0.1, sz=0.1,
                 _emissive=True,
+                _emissive_color=glm.vec3(1.0, 1.0, 0.8)
+            ),
+            ObjectMetadata(
+                name="luz_onibus",
+                obj_file="objetos/luz_onibus/LightBulb.obj",
+                textures_map={
+                    'LightBulb': 'LightBulbAO.png'
+                },
+                shader_program=shader_program,
+                angle=180, rx=1, ry=0, rz=0,
+                tx=-3.35, ty=2.6, tz=-7.72,
+                sx=0.01, sy=0.01, sz=0.01,
+                _emissive=False,
+                _emissive_color=glm.vec3(1.0, 1.0, 0.8)
+            ),
+            ObjectMetadata(
+                name="fone_ouvido",
+                obj_file="objetos/fone_ouvido/blinn3SG.obj",
+                textures_map={
+                    'blinn3SG': 'T_BeatsStudio3_White_BC.png'
+                },
+                shader_program=shader_program,
+                angle=45, rx=1, ry=0, rz=0,
+                tx=-3.2, ty=2.0, tz=-7.3,
+                sx=0.01, sy=0.01, sz=0.01,
+                _emissive=False,
                 _emissive_color=glm.vec3(1.0, 1.0, 0.8)
             )
         ]
