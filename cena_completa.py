@@ -22,12 +22,12 @@ constant_farol = 1.0  # Atenuação constante do farol
 linear_farol = 0.02  # Atenuação linear do farol
 quadratic_farol = 0.002  # Atenuação quadrática do farol
 
-ka_fone = 1  # Coeficiente de reflexão ambiente do fone
-kd_fone = 0.7  # Coeficiente de reflexão difusa do fone
-ks_fone = 0.5  # Coeficiente de reflexão especular do fone
+ka_fone = 0.7  # Coeficiente de reflexão ambiente do fone
+kd_fone = 0.3  # Coeficiente de reflexão difusa do fone
+ks_fone = 0.2  # Coeficiente de reflexão especular do fone
 constant_fone = 1.0  # Atenuação constante do fone
-linear_fone = 0.09  # Atenuação linear do fone
-quadratic_fone = 0.032  # Atenuação quadrática do fone
+linear_fone = 0.9 # Atenuação linear do fone
+quadratic_fone = 0.8  # Atenuação quadrática do fone
 
 ka_lampada = 1  # Coeficiente de reflexão ambiente da lâmpada
 kd_lampada = 0.7  # Coeficiente de reflexão difusa da lâmpada
@@ -298,12 +298,14 @@ def process_input(window, obstaculos):
     
     # Potencia da luz ambiente (tecla 0 e 9)
     if glfw.get_key(window, glfw.KEY_9) == glfw.PRESS:
-        luz_ambiente_power += 0.1
+        luz_ambiente_power += 0.05
+        if luz_ambiente_power > 2.0:
+            luz_ambiente_power = 2.0
         print(f"Potência da luz ambiente aumentada para {luz_ambiente_power:.1f}")
         while glfw.get_key(window, glfw.KEY_0) == glfw.PRESS:
             glfw.poll_events()
     elif glfw.get_key(window, glfw.KEY_0) == glfw.PRESS:
-        luz_ambiente_power -= 0.1
+        luz_ambiente_power -= 0.05
         if luz_ambiente_power < 0.1:
             luz_ambiente_power = 0.1
         print(f"Potência da luz ambiente reduzida para {luz_ambiente_power:.1f}")
