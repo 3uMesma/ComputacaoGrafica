@@ -1,129 +1,188 @@
 #version 330 core
 out vec4 FragColor;
 
-in vec2 out_texture;
-in vec3 out_normal;
-in vec3 out_fragPos;
+in vec2  out_texture;
+in vec3  out_normal;
+in vec3  out_fragPos;
 
-// Uniforms para iluminação
-uniform vec3 lightPos;    // Used in else clause
-uniform vec3 lightPos1;   // define coordenadas de posicao da luz #1
-uniform vec3 lightPos2;   // define coordenadas de posicao da luz #2
-uniform vec3 lightColor;
-uniform vec3 lightDir1;    // Direção do farol
-uniform vec3 lightDir2;    // Direção do farol
-uniform float lightCutOff; // Ângulo de corte (cos do ângulo)
-uniform float lightPower;
-uniform vec3 viewPos;
+// common uniforms
+uniform vec3  viewPos;
 
-uniform float luzAmbientePower;
-uniform bool luzAmbienteLigada;
-uniform bool luzFarolLigada;
+// each light properties
+uniform float ka_farol;
+uniform float ks_farol;
+uniform float kd_farol;
+uniform float constant_farol;
+uniform float linear_farol;
+uniform float quadratic_farol;
 
-// Material
-uniform float ka;
-uniform float kd;
-uniform float ks;
-uniform float ns;
+uniform float ka_fone;
+uniform float ks_fone;
+uniform float kd_fone;
+uniform float constant_fone;
+uniform float linear_fone;
+uniform float quadratic_fone;
+
+uniform float ka_lampada;
+uniform float ks_lampada;
+uniform float kd_lampada;
+uniform float constant_lampada;
+uniform float linear_lampada;
+uniform float quadratic_lampada;
+
+uniform float ka_celular;
+uniform float ks_celular;
+uniform float kd_celular;
+uniform float constant_celular;
+uniform float linear_celular;
+uniform float quadratic_celular;
+
 uniform sampler2D samplerTexture;
+uniform float mat_kd;
+uniform float mat_ks;
+uniform float mat_ns;
 
-// Emissive
-uniform bool isEmissive;
-uniform vec3 emissiveColor;
+
+// ambient light (always)
+uniform bool  luzAmbienteLigada;
+uniform float luzAmbientePower;
+uniform vec3  lightColorFarol;
+
+// emissive
+uniform bool  isEmissive;
+uniform vec3  emissiveColor;
 uniform float emissivePower;
 
+// object type: 0=internal, 1=external, 2=bus
+uniform int   objType;
+
+// spotlights (external)
+uniform bool  luzFarolLigada;
+uniform vec3  lightPos1;
+uniform vec3  lightDir1;
+uniform vec3  lightPos2;
+uniform vec3  lightDir2;
+uniform float lightCutOff;
+uniform float lightOuterCutOff;
+uniform float lightPower;
+
+// internal point lights
+uniform bool  luzFoneLigada;
+uniform vec3  posFone;
+uniform vec3  corFone;
+uniform bool  luzLampadaLigada;
+uniform vec3  posLampada;
+uniform vec3  corLampada;
+
+// external point light: celular
+uniform bool  luzCelularLigada;
+uniform vec3  posCelular;
+uniform vec3  corCelular;
+
+// helper: point light using Phong
+vec3 calcPointLight(vec3 Lpos, vec3 Lcolor, bool ligado, float ka_curr_fonte, 
+                    float ks_curr_fonte, float kd_curr_fonte,
+                    float constant_curr_fonte, float linear_curr_fonte,
+                    float quadratic_curr_fonte) {
+    if (!ligado) return vec3(0.0);
+    vec3 N = normalize(out_normal);
+    vec3 L = normalize(Lpos - out_fragPos);
+    vec3 viewDir = normalize(viewPos - out_fragPos);
+    // diffuse shading
+    float diff = max(dot(N, L), 0.0);
+    // specular shading
+    vec3 reflectDir = reflect(-L, N);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), mat_ns);
+    // attenuation
+    float distance = length(Lpos - out_fragPos);
+    float attenuation = 1.0 / (constant_curr_fonte + linear_curr_fonte * distance + quadratic_curr_fonte * (distance * distance));
+    // combine results
+    vec3 ambient = luzAmbienteLigada ? ka_curr_fonte * Lcolor * vec3(texture(samplerTexture, out_texture)) * mat_kd : vec3(0.0);
+    vec3 diffuse = kd_curr_fonte * Lcolor * diff * vec3(texture(samplerTexture, out_texture)) * mat_kd;
+    vec3 specular = ks_curr_fonte * Lcolor * spec * vec3(texture(samplerTexture, out_texture)) * mat_ks;
+
+    ambient *= attenuation;
+    diffuse *= attenuation;
+    specular *= attenuation;
+    return ambient + diffuse + specular;
+}
+
+// helper: spotlight using Phong
+vec3 calcSpotLight(vec3 Lpos, vec3 Lcolor, vec3 Ldir, bool ligado, float ka_curr_fonte, 
+                    float ks_curr_fonte, float kd_curr_fonte,
+                    float constant_curr_fonte, float linear_curr_fonte,
+                    float quadratic_curr_fonte) {
+    if (!ligado) return vec3(0.0);
+    vec3 N = normalize(out_normal);
+    vec3 L = normalize(Lpos - out_fragPos);
+    vec3 viewDir = normalize(viewPos - out_fragPos);
+    // diffuse shading
+    float diff = max(dot(N, L), 0.0);
+    // specular shading
+    vec3 reflectDir = reflect(-L, N);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), mat_ns);
+    // attenuation
+    float distance = length(Lpos - out_fragPos);
+    float attenuation = 1.0 / (constant_curr_fonte + linear_curr_fonte * distance + quadratic_curr_fonte * (distance * distance));
+    
+    // spotlight intensity
+    float theta = dot(L, normalize(-Ldir));
+    float epsilon = lightCutOff - lightOuterCutOff;
+    float intensity = clamp((theta - lightOuterCutOff) / epsilon, 0.0, 1.0);
+    // return vec3(0, 1.0, 1.0) * intensity * attenuation; 
+    // combine results
+    vec3 ambient = luzAmbienteLigada ? ka_curr_fonte * Lcolor * vec3(texture(samplerTexture, out_texture)) * mat_kd : vec3(0.0);
+    vec3 diffuse = kd_curr_fonte * Lcolor * diff * vec3(texture(samplerTexture, out_texture)) * mat_kd;
+    vec3 specular = ks_curr_fonte * Lcolor * spec * vec3(texture(samplerTexture, out_texture)) * mat_ks;
+    ambient *= attenuation * intensity;
+    diffuse *= attenuation * intensity;
+    specular *= attenuation * intensity;
+    return ambient + diffuse + specular;
+}
+
 void main() {
+    // emissive objects
     if (isEmissive) {
         FragColor = vec4(emissiveColor * emissivePower, 1.0);
         return;
     }
-    
-    vec3 norm = normalize(out_normal);
 
-    // para cada farol
-    vec3 lightToFrag1 = normalize(lightPos1 - out_fragPos);
-    vec3 lightDirNorm1 = normalize(lightDir1);
-    vec3 lightToFrag2 = normalize(lightPos2 - out_fragPos);
-    vec3 lightDirNorm2 = normalize(lightDir2);
-    
-    // Cálculo do ângulo entre a direção do farol e a direção para o fragmento
-    float theta1 = dot(lightToFrag1, -lightDirNorm1);
-    float theta2 = dot(lightToFrag2, -lightDirNorm2);
-    
-    // Spotlight effect - só ilumina se estiver dentro do cone (farol 1)
-    if(theta1 > lightCutOff) {
-        // Suavização das bordas do cone
-        float epsilon = lightCutOff * 0.9 - lightCutOff;
-        float intensity = clamp((theta1 - lightCutOff) / epsilon, 0.0, 1.0);
-        
-        // Diffuse 
-        float diff = max(dot(norm, lightToFrag1), 0.0);
-        vec3 diffuse = kd * diff * lightColor * lightPower * intensity;
-        
-        // Specular
-        vec3 viewDir = normalize(viewPos - out_fragPos);
-        vec3 reflectDir = reflect(-lightToFrag1, norm);
-        float spec = pow(max(dot(viewDir, reflectDir), 0.0), ns);
-        vec3 specular = ks * spec * lightColor * lightPower * intensity;
-        
-        // Ambient reduzido quando dentro do cone
-        vec3 ambient = luzFarolLigada
-                    ? ka * lightColor * lightPower * 0.1
-                    : (luzAmbienteLigada
-                        ? ka * lightColor * luzAmbientePower
-                        : vec3(0.0));  
-          
-        // Resultado final
-        vec4 texColor = texture(samplerTexture, out_texture);
-        vec3 result = (ambient + diffuse + specular) * texColor.rgb;
-        FragColor = vec4(result, texColor.a);
-    } else if (theta2 > lightCutOff) {
-        // Suavização das bordas do cone
-        float epsilon = lightCutOff * 0.9 - lightCutOff;
-        float intensity = clamp((theta2 - lightCutOff) / epsilon, 0.0, 1.0);
-        
-        // Diffuse 
-        float diff = max(dot(norm, lightToFrag2), 0.0);
-        vec3 diffuse = kd * diff * lightColor * lightPower * intensity;
-        
-        // Specular
-        vec3 viewDir = normalize(viewPos - out_fragPos);
-        vec3 reflectDir = reflect(-lightToFrag2, norm);
-        float spec = pow(max(dot(viewDir, reflectDir), 0.0), ns);
-        vec3 specular = ks * spec * lightColor * lightPower * intensity;
-        
-        // Ambient reduzido quando dentro do cone
-        vec3 ambient = luzFarolLigada
-                    ? ka * lightColor * lightPower * 0.1
-                    : (luzAmbienteLigada
-                        ? ka * lightColor * luzAmbientePower
-                        : vec3(0.0));  
-          
-        // Resultado final
-        vec4 texColor = texture(samplerTexture, out_texture);
-        vec3 result = (ambient + diffuse + specular) * texColor.rgb;
-        FragColor = vec4(result, texColor.a);
+    // ambient for all
+    vec3 colorAccum = vec3(0.0);
+    vec3 fone_effects = calcPointLight(posFone, corFone, luzFoneLigada, 
+                                    ka_fone, ks_fone, kd_fone, 
+                                    constant_fone, linear_fone, quadratic_fone);
+    vec3 lampada_effects = calcPointLight(posLampada, corLampada, luzLampadaLigada, 
+                                    ka_lampada, ks_lampada, kd_lampada, 
+                                    constant_lampada, linear_lampada, quadratic_lampada);
+
+    vec3 l1_effects = calcSpotLight(lightPos1, lightColorFarol, lightDir1, luzFarolLigada, 
+                                    ka_farol, ks_farol, kd_farol, 
+                                    constant_farol, linear_farol, quadratic_farol) * lightPower;
+
+    vec3 l2_effects = calcSpotLight(lightPos2, lightColorFarol, lightDir2, luzFarolLigada, 
+                                    ka_farol, ks_farol, kd_farol, 
+                                    constant_farol, linear_farol, quadratic_farol) * lightPower;
+    vec3 celular_effects = calcPointLight(posCelular, corCelular, luzCelularLigada, 
+                                    ka_celular, ks_celular, kd_celular, 
+                                    constant_celular, linear_celular, quadratic_celular);
+
+    if (objType == 0) {
+        colorAccum += fone_effects;
+        colorAccum += lampada_effects;
+    } else if (objType == 1) {
+        colorAccum += l1_effects;
+        colorAccum += l2_effects;
+        colorAccum += celular_effects;
     } else {
-        // Fora do cone - apenas iluminação ambiente mínima
-        vec3 norm = normalize(out_normal);
-        vec4 texColor = texture(samplerTexture, out_texture);
-        
-        // Iluminação ambiente
-        vec3 ambient = luzAmbienteLigada ? ka * lightColor * luzAmbientePower : vec3(0.0);
-        
-        // Iluminação difusa
-        vec3 lightDir = normalize(lightPos - out_fragPos);
-        float diff = max(dot(norm, lightDir), 0.0);
-        vec3 diffuse = kd * diff * lightColor;
-        
-        // Iluminação especular
-        vec3 viewDir = normalize(viewPos - out_fragPos);
-        vec3 reflectDir = reflect(-lightDir, norm);
-        float spec = pow(max(dot(viewDir, reflectDir), 0.0), ns);
-        vec3 specular = ks * spec * lightColor;
-        
-        // Combina todos os componentes
-        vec3 result = (ambient + diffuse + specular) * texColor.rgb;
-        FragColor = vec4(result, texColor.a);
+        colorAccum += fone_effects;
+        colorAccum += lampada_effects;
     }
+
+    // ambiente
+    colorAccum += luzAmbienteLigada ? luzAmbientePower * vec3(texture(samplerTexture, out_texture)) * mat_kd : vec3(0.0);
+
+    
+
+    FragColor = vec4(colorAccum, 1);
 }

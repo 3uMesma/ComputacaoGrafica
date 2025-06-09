@@ -8,6 +8,10 @@ class ObjectMetadata(GenericObj):
         self.emissive = transform.pop('_emissive', False)
         self.emissive_color = transform.pop('_emissive_color', glm.vec3(1.0, 1.0, 0.0))
         self.emissive_power = transform.pop('_emissive_power', 1.0)
+        self.obj_type = transform.pop('_obj_type', 1) # default e externo
+        self.kd = transform.pop('_kd', 0.7)
+        self.ks = transform.pop('_ks', 0.5)
+        self.ns = transform.pop('_ns', 32.0)
         
         # Passe o nome da pasta baseado no nome do objeto
         textures_folder = f"objetos/{self.name}/texturas/"
@@ -53,7 +57,8 @@ def gen_scene_objects(shader_program):
                 shader_program=shader_program,
                 angle=0, rx=0, ry=1, rz=0,
                 tx=-3.2, ty=1, tz=-6.9,
-                sx=0.01, sy=0.01, sz=0.01
+                sx=0.01, sy=0.01, sz=0.01,
+                _obj_type=0, # interno
             ),
             ObjectMetadata(
                 name="onibus",
@@ -66,7 +71,8 @@ def gen_scene_objects(shader_program):
                 shader_program=shader_program,
                 angle=0,  rx=0, ry=1, rz=0,
                 tx=-2,    ty=-1, tz=-5,
-                sx=1.5,   sy=1.5, sz=1.5
+                sx=1.5,   sy=1.5, sz=1.5,
+                _obj_type=2 # boundary
             ),
             ObjectMetadata(
                 name='ponto_onibus',
@@ -107,7 +113,8 @@ def gen_scene_objects(shader_program):
                 shader_program=shader_program,
                 angle=180, rx=0, ry=1, rz=0,
                 tx=-2.7, ty=1.4, tz=-7.2,
-                sx=0.2, sy=0.2, sz=0.2
+                sx=0.2, sy=0.2, sz=0.2,
+                _obj_type=0, # interno
             ),
             ObjectMetadata(
                 name='mala',
@@ -121,7 +128,8 @@ def gen_scene_objects(shader_program):
                 shader_program=shader_program,
                 angle=0, rx=0, ry=1, rz=0,
                 tx=-2.7, ty=0.91, tz=-6.7,
-                sx=1, sy=1, sz=1
+                sx=1, sy=1, sz=1,
+                _obj_type=0, # interno
             ),
             ObjectMetadata(
                 name='rua',
@@ -170,8 +178,7 @@ def gen_scene_objects(shader_program):
                 angle=180, rx=1, ry=0, rz=0,
                 tx=-3.35, ty=2.6, tz=-7.72,
                 sx=0.01, sy=0.01, sz=0.01,
-                _emissive=False,
-                _emissive_color=glm.vec3(1.0, 1.0, 0.8)
+                _obj_type=0, # interno
             ),
             ObjectMetadata(
                 name="fone_ouvido",
@@ -183,7 +190,6 @@ def gen_scene_objects(shader_program):
                 angle=45, rx=1, ry=0, rz=0,
                 tx=-3.2, ty=2.0, tz=-7.3,
                 sx=0.01, sy=0.01, sz=0.01,
-                _emissive=False,
-                _emissive_color=glm.vec3(1.0, 1.0, 0.8)
+                _obj_type=0, # interno
             )
         ]

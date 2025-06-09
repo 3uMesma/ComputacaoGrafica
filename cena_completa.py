@@ -10,23 +10,56 @@ from modulos.skybox_utils import init_skybox, skybox_update
 from modulos.floor_utils import init_floor, update_floor
 
 # --- Configurações iniciais da cena ---
-ALTURA = 700
-LARGURA = 700
+ALTURA = 1000
+LARGURA = 1000
 
 # --- Variáveis de iluminação ---
 lightColor = glm.vec3(1.0, 1.0, 0.8)  # Luz amarelada
-ka = 0.3  # Coeficiente de reflexão ambiente
-kd = 0.7  # Coeficiente de reflexão difusa
-ks = 0.5  # Coeficiente de reflexão especular
-ns = 32.0  # Expoente de reflexão especular
-lightPos = glm.vec3(0.0, 0.0, 0.0)
+ka_farol = 1  # Coeficiente de reflexão ambiente do farol
+kd_farol = 0.7  # Coeficiente de reflexão difusa do farol
+ks_farol = 0.5  # Coeficiente de reflexão especular do farol
+constant_farol = 1.0  # Atenuação constante do farol
+linear_farol = 0.02  # Atenuação linear do farol
+quadratic_farol = 0.002  # Atenuação quadrática do farol
+
+ka_fone = 1  # Coeficiente de reflexão ambiente do fone
+kd_fone = 0.7  # Coeficiente de reflexão difusa do fone
+ks_fone = 0.5  # Coeficiente de reflexão especular do fone
+constant_fone = 1.0  # Atenuação constante do fone
+linear_fone = 0.09  # Atenuação linear do fone
+quadratic_fone = 0.032  # Atenuação quadrática do fone
+
+ka_lampada = 1  # Coeficiente de reflexão ambiente da lâmpada
+kd_lampada = 0.7  # Coeficiente de reflexão difusa da lâmpada
+ks_lampada = 0.5  # Coeficiente de reflexão especular da lâmpada
+constant_lampada = 1.0  # Atenuação constante da lâmpada
+linear_lampada = 0.09  # Atenuação linear da lâmpada
+quadratic_lampada = 0.032  # Atenuação quadrática da lâmpada
+
+ka_celular = 1  # Coeficiente de reflexão ambiente do celular
+kd_celular = 0.7  # Coeficiente de reflexão difusa do celular
+ks_celular = 0.5  # Coeficiente de reflexão especular do celular
+constant_celular = 1.0  # Atenuação constante do celular
+linear_celular = 0.09  # Atenuação linear do celular
+quadratic_celular = 0.032  # Atenuação quadrática do celular
+
 luz_ambiente_ligada = True
-luz_ambiente_power = 2.0
+luz_ambiente_power = 0.8
 luz_farol_ligada = True
+luzCelularCor = glm.vec3(1.0, 0.0, 0.0)  # Cor da luz do celular
+luzCelularPos = glm.vec3(0.0, 10.0, 0.0)  # Posição da luz do celular
+luzCelularLigada = True
+luzFoneCor = glm.vec3(0.0, 1.0, 0.0)  # Cor da luz do fone de ouvido
+luzFonePos = glm.vec3(0.0, 10.0, 0.0)  # Posição da luz do fone de ouvido
+luzFoneLigada = True
+luzLampadaCor = glm.vec3(0.0, 0.0, 1.0)  # Cor da luz da lâmpada do ônibus
+luzLampadaPos = glm.vec3(0.0, 10.0, 0.0)  # Posição da luz da lâmpada do ônibus
+luzLampadaLigada = True
 
 cameraPos   = glm.vec3(0.0,  1.0,  15.0)
 cameraFront = glm.vec3(0.0,  0.0, -1.0)
 cameraUp    = glm.vec3(0.0,  1.0,  0.0)
+cameraSpeedFactor = 3
 
 # --- Callbacks de input / movimento de câmera ---
 firstMouse = True
@@ -53,6 +86,8 @@ DELTA_TEMPORAL_PLACA = 0.05
 p_pressed = False
 wireframe = False
 
+
+
 def init_window():
     if not glfw.init():
         raise RuntimeError("Falha ao inicializar GLFW")
@@ -66,7 +101,7 @@ def init_window():
     return window
 
 def update_bus_position(scene_objects, offsets_iniciais):
-    global lightPos, busPos, busYaw
+    global busPos, busYaw
     
     # --- Atualiza o ônibus principal ---
     onibus = scene_objects[2]
@@ -82,7 +117,8 @@ def update_bus_position(scene_objects, offsets_iniciais):
     for farol in [farol_direito, farol_esquerdo]:
         farol.light_direction = glm.vec3(0.0, 0.0, 1.0)
         farol.light_cutoff = glm.cos(glm.radians(15.0))
-        farol.light_power = 30.0
+        farol.light_outer_cutoff = glm.cos(glm.radians(18.0))
+        farol.light_power = 1.0
     
     farol_direito.position_offset = glm.vec3(-1.25, 1.30, 6.0)
     farol_esquerdo.position_offset = glm.vec3(1.25, 1.30, 6.0)
@@ -148,8 +184,9 @@ def get_bbox(obj_pos, offset):
 def process_input(window, obstaculos):
     global cameraPos, cameraFront, cameraUp, deltaTime, placa_escala, parametro_temporal_placa, p_pressed, wireframe
     speed = 2.5 * deltaTime
-    global luz_ambiente_ligada, luz_ambiente_power, luz_farol_ligada
+    global luz_ambiente_ligada, luz_ambiente_power, luz_farol_ligada, luzCelularLigada, luzFoneLigada, luzLampadaLigada
     global busPos, busYaw
+    global kd, ka, ks, ns
 
     speed = 2.5 * deltaTime
     # translação frente/trás (eixo local Z do ônibus)
@@ -174,7 +211,7 @@ def process_input(window, obstaculos):
             bbox['min_y'] <= new_pos.y <= bbox['max_y'] and
             bbox['min_z'] <= new_pos.z <= bbox['max_z']):
             colisao = True
-            print(f"Colisão com objeto em {bbox}!")
+            # print(f"Colisão com objeto em {bbox}!")
             break
 
     if not colisao:
@@ -195,16 +232,16 @@ def process_input(window, obstaculos):
     # movimentando a camera
     new_pos = cameraPos
     if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS:
-        new_pos = cameraPos + speed * cameraFront
+        new_pos = cameraPos + speed * cameraFront * cameraSpeedFactor
             
     if glfw.get_key(window, glfw.KEY_S) == glfw.PRESS:
-        new_pos = cameraPos - speed * cameraFront
+        new_pos = cameraPos - speed * cameraFront * cameraSpeedFactor
             
     if glfw.get_key(window, glfw.KEY_A) == glfw.PRESS:
-        new_pos = cameraPos - glm.normalize(glm.cross(cameraFront, cameraUp)) * speed
+        new_pos = cameraPos - glm.normalize(glm.cross(cameraFront, cameraUp)) * speed * cameraSpeedFactor
             
     if glfw.get_key(window, glfw.KEY_D) == glfw.PRESS:
-        new_pos = cameraPos + glm.normalize(glm.cross(cameraFront, cameraUp)) * speed
+        new_pos = cameraPos + glm.normalize(glm.cross(cameraFront, cameraUp)) * speed * cameraSpeedFactor
 
     # verificando se ele ultrapasosu o limite da cena
     if not (
@@ -257,6 +294,36 @@ def process_input(window, obstaculos):
         luz_farol_ligada = not luz_farol_ligada
         print(f"Luz farol {'ligada' if luz_farol_ligada else 'desligada'}")
         while glfw.get_key(window, glfw.KEY_F) == glfw.PRESS:  # Espera soltar a tecla
+            glfw.poll_events()
+    
+    # Potencia da luz ambiente (tecla 0 e 9)
+    if glfw.get_key(window, glfw.KEY_9) == glfw.PRESS:
+        luz_ambiente_power += 0.1
+        print(f"Potência da luz ambiente aumentada para {luz_ambiente_power:.1f}")
+        while glfw.get_key(window, glfw.KEY_0) == glfw.PRESS:
+            glfw.poll_events()
+    elif glfw.get_key(window, glfw.KEY_0) == glfw.PRESS:
+        luz_ambiente_power -= 0.1
+        if luz_ambiente_power < 0.1:
+            luz_ambiente_power = 0.1
+        print(f"Potência da luz ambiente reduzida para {luz_ambiente_power:.1f}")
+        while glfw.get_key(window, glfw.KEY_9) == glfw.PRESS:
+            glfw.poll_events()
+    
+    if glfw.get_key(window, glfw.KEY_U) == glfw.PRESS:
+        luzCelularLigada = not luzCelularLigada
+        print(f"Luz do celular {'ligada' if luzCelularLigada else 'desligada'}")
+        while glfw.get_key(window, glfw.KEY_U) == glfw.PRESS:  # Espera soltar a tecla
+            glfw.poll_events()
+    if glfw.get_key(window, glfw.KEY_O) == glfw.PRESS:
+        luzFoneLigada = not luzFoneLigada
+        print(f"Luz do fone {'ligada' if luzFoneLigada else 'desligada'}")
+        while glfw.get_key(window, glfw.KEY_O) == glfw.PRESS:  # Espera soltar a tecla
+            glfw.poll_events()
+    if glfw.get_key(window, glfw.KEY_I) == glfw.PRESS:
+        luzLampadaLigada = not luzLampadaLigada
+        print(f"Luz da lâmpada {'ligada' if luzLampadaLigada else 'desligada'}")
+        while glfw.get_key(window, glfw.KEY_I) == glfw.PRESS:  # Espera soltar a tecla
             glfw.poll_events()
 
 
@@ -314,42 +381,9 @@ def view_matrix():
 def projection_matrix():
     return np.array(glm.perspective(glm.radians(fov), LARGURA/ALTURA, 0.1, 100.0))
 
-def setup_uniforms(program):
-    """Configura todos os uniforms do shader"""
-    global lightPos, lightColor, cameraPos, lightPower, ka, kd, ks, ns
-    usar_shader(program)
-    
-    uniforms = {
-        "lightPos": (lightPos.x, lightPos.y, lightPos.z),
-        "lightColor": (lightColor.x, lightColor.y, lightColor.z),
-        "lightPower": lightPower,
-        "ka": ka,
-        "kd": kd,
-        "ks": ks,
-        "ns": ns
-    }
-    
-    print("\nUniforms disponíveis no shader:")
-    num_uniforms = glGetProgramiv(program, GL_ACTIVE_UNIFORMS)
-    for i in range(num_uniforms):
-        name, size, type = glGetActiveUniform(program, i)
-        print(f"  {name.decode('utf-8')}")
-    
-    for name, value in uniforms.items():
-        loc = glGetUniformLocation(program, name)
-        if loc == -1:
-            print(f"AVISO: Uniform '{name}' não encontrado no shader!")
-            continue
-            
-        if isinstance(value, tuple):
-            glUniform3f(loc, *value)
-        else:
-            glUniform1f(loc, value)
-        print(f"Definido uniform {name}: {value}")
-
 # --- Execução principal ---
 def main():
-    global cameraPos, cameraFront, cameraUp, deltaTime, lastFrame, polygonal_mode, fov, busPos, busYaw, lightPos
+    global cameraPos, cameraFront, cameraUp, deltaTime, lastFrame, polygonal_mode, fov, busPos, busYaw
     window = init_window()
 
     # registra callbacks
@@ -378,7 +412,6 @@ def main():
     # inicializa cena
     scene_objects = gen_scene_objects(program)
     busPos = glm.vec3(-2.6, -0.99, 9.5)
-    lightPos = busPos
     cameraPos.z += 35
 
     # Definindo as posições
@@ -472,56 +505,78 @@ def main():
             
             # Parâmetros comuns (ou podem ser específicos por farol se necessário)
             glUniform1f(glGetUniformLocation(program, "lightCutOff"), farol.light_cutoff)
+            glUniform1f(glGetUniformLocation(program, "lightOuterCutOff"), farol.light_outer_cutoff)
             glUniform1f(glGetUniformLocation(program, "lightPower"), farol.light_power)
             
-            farol.draw(model_matrix_func=model_matrix, **farol.transform)
+            # farol.draw(model_matrix_func=model_matrix, **farol.transform)
 
         # Configura todos os uniforms
-        glUniform3f(glGetUniformLocation(program, "lightColor"), lightColor.x, lightColor.y, lightColor.z)
         glUniform3f(glGetUniformLocation(program, "viewPos"), cameraPos.x, cameraPos.y, cameraPos.z)
-        glUniform1f(glGetUniformLocation(program, "ka"), ka)
-        glUniform1f(glGetUniformLocation(program, "kd"), kd)
-        glUniform1f(glGetUniformLocation(program, "ks"), ks)
-        glUniform1f(glGetUniformLocation(program, "ns"), ns)
 
         # Configura uniforms de iluminação
         usar_shader(program)
         
+        luzCelularPos = scene_objects[4].get_pos()  # Posição da luz do celular
+        luzFonePos = scene_objects[11].get_pos()  # Posição da luz do fone de ouvido
+        luzLampadaPos = scene_objects[10].get_pos()  # Posição da luz da lâmpada do ônibus
+
         # Aplica o poder da luz ambiente
         glUniform1f(glGetUniformLocation(program, "luzAmbientePower"), luz_ambiente_power)
         glUniform1i(glGetUniformLocation(program, "luzAmbienteLigada"), luz_ambiente_ligada)
+        glUniform3f(glGetUniformLocation(program, "posFone"),
+                    luzFonePos.x, luzFonePos.y, luzFonePos.z)
+        glUniform3f(glGetUniformLocation(program, "corFone"),
+                    luzFoneCor.x, luzFoneCor.y, luzFoneCor.z)
+        glUniform3f(glGetUniformLocation(program, "posCelular"),
+                    luzCelularPos.x, luzCelularPos.y, luzCelularPos.z)
+        glUniform3f(glGetUniformLocation(program, "corCelular"),
+                    luzCelularCor.x, luzCelularCor.y, luzCelularCor.z)
+        glUniform3f(glGetUniformLocation(program, "posLampada"),
+                    luzLampadaPos.x, luzLampadaPos.y, luzLampadaPos.z)
+        glUniform3f(glGetUniformLocation(program, "corLampada"),
+                    luzLampadaCor.x, luzLampadaCor.y, luzLampadaCor.z)
+        glUniform1i(glGetUniformLocation(program, "luzCelularLigada"), luzCelularLigada)
+        glUniform1i(glGetUniformLocation(program, "luzFoneLigada"), luzFoneLigada)
+        glUniform1i(glGetUniformLocation(program, "luzLampadaLigada"), luzLampadaLigada)
+        glUniform1f(glGetUniformLocation(program, "ka_farol"), ka_farol)
+        glUniform1f(glGetUniformLocation(program, "kd_farol"), kd_farol)
+        glUniform1f(glGetUniformLocation(program, "ks_farol"), ks_farol)
+        glUniform1f(glGetUniformLocation(program, "constant_farol"), constant_farol)
+        glUniform1f(glGetUniformLocation(program, "linear_farol"), linear_farol)
+        glUniform1f(glGetUniformLocation(program, "quadratic_farol"), quadratic_farol)
+        glUniform1f(glGetUniformLocation(program, "ka_fone"), ka_fone)
+        glUniform1f(glGetUniformLocation(program, "kd_fone"), kd_fone)
+        glUniform1f(glGetUniformLocation(program, "ks_fone"), ks_fone)
+        glUniform1f(glGetUniformLocation(program, "constant_fone"), constant_fone)
+        glUniform1f(glGetUniformLocation(program, "linear_fone"), linear_fone)
+        glUniform1f(glGetUniformLocation(program, "quadratic_fone"), quadratic_fone)
+        glUniform1f(glGetUniformLocation(program, "ka_lampada"), ka_lampada)
+        glUniform1f(glGetUniformLocation(program, "kd_lampada"), kd_lampada)
+        glUniform1f(glGetUniformLocation(program, "ks_lampada"), ks_lampada)
+        glUniform1f(glGetUniformLocation(program, "constant_lampada"), constant_lampada)
+        glUniform1f(glGetUniformLocation(program, "linear_lampada"), linear_lampada)
+        glUniform1f(glGetUniformLocation(program, "quadratic_lampada"), quadratic_lampada)
+        glUniform1f(glGetUniformLocation(program, "ka_celular"), ka_celular)
+        glUniform1f(glGetUniformLocation(program, "kd_celular"), kd_celular)
+        glUniform1f(glGetUniformLocation(program, "ks_celular"), ks_celular)
+        glUniform1f(glGetUniformLocation(program, "constant_celular"), constant_celular)
+        glUniform1f(glGetUniformLocation(program, "linear_celular"), linear_celular)
+        glUniform1f(glGetUniformLocation(program, "quadratic_celular"), quadratic_celular)
+
+        
         
         # Configura outros parâmetros de iluminação
-        glUniform3f(glGetUniformLocation(program, "lightColor"), lightColor.x, lightColor.y, lightColor.z)
+        glUniform3f(glGetUniformLocation(program, "lightColorFarol"), lightColor.x, lightColor.y, lightColor.z)
         glUniform3f(glGetUniformLocation(program, "viewPos"), cameraPos.x, cameraPos.y, cameraPos.z)
-        glUniform1f(glGetUniformLocation(program, "kd"), kd)
-        glUniform1f(glGetUniformLocation(program, "ks"), ks)
-        glUniform1f(glGetUniformLocation(program, "ns"), ns)
 
         # Configura matrizes
         glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_TRUE, view_matrix())
         glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_TRUE, projection_matrix())
 
-        # Atualiza e renderiza objetos
         for i, objmeta in enumerate(scene_objects):
-            if i == 8 or i == 9:  # Farois
-                # Configura parâmetros específicos do farol
-                glUniform3f(glGetUniformLocation(program, "lightPos"), 
-                        objmeta.transform['tx'], 
-                        objmeta.transform['ty'], 
-                        objmeta.transform['tz'])
-                glUniform3f(glGetUniformLocation(program, "lightDir"),
-                        objmeta.light_direction.x,
-                        objmeta.light_direction.y, 
-                        objmeta.light_direction.z)
-                glUniform1f(glGetUniformLocation(program, "lightCutOff"), objmeta.light_cutoff)
-            else:
-                glUniform1f(glGetUniformLocation(program, "ka"), ka)
-                glUniform1f(glGetUniformLocation(program, "kd"), kd)
-                glUniform1f(glGetUniformLocation(program, "ks"), ks)
-                glUniform1f(glGetUniformLocation(program, "ns"), ns)
-
             objmeta.draw(model_matrix_func=model_matrix, **objmeta.transform)
+
+
 
         glfw.swap_buffers(window)
         glfw.poll_events()

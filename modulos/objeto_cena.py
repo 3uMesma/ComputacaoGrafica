@@ -11,6 +11,7 @@ class GenericObj:
     def __init__(self, obj_path: str, textures_folder: str, material_texture_map: dict, shader_program: int):
         self.shader_program = shader_program
         self.vertices = []
+        self.normals = []
         self.texcoords = []
         self.material_groups = {}
         self.texture_ids = {}
@@ -41,7 +42,7 @@ class GenericObj:
         Lê arquivo .obj e extrai vértices, texcoords e faces agrupadas por material.
         Gera buffers em listas self.vertices e self.texcoords já triangulados.
         """
-        verts, texs = [], []
+        verts, texs, norms = [], [], []
         faces_by_mat = {}  # material -> lista de tuplas (indices de v, indices de vt)
         current_mat = None
 
@@ -54,29 +55,34 @@ class GenericObj:
                     verts.append(list(map(float, vals[1:4])))
                 elif tag == 'vt':
                     texs.append(list(map(float, vals[1:3])))
+                elif tag == 'vn':                   # <-- captura vn
+                    norms.append(list(map(float, vals[1:4])))
                 elif tag in ('usemtl', 'usemat'):
                     current_mat = vals[1]
                     faces_by_mat.setdefault(current_mat, [])
                 elif tag == 'f':
-                    vi, ti = [], []
+                    vi, ti, ni = [], [], []
                     for v in vals[1:]:
                         p = v.split('/')
                         vi.append(int(p[0]))
                         ti.append(int(p[1]) if len(p) > 1 and p[1] else 0)
-                    faces_by_mat.setdefault(current_mat, []).append((vi, ti))
+                        ni.append(int(p[2]) if len(p) > 2 and p[2] else 0)  # captura normais
+                    faces_by_mat.setdefault(current_mat, []).append((vi, ti, ni))
 
         # Triangula e popula listas de dados finais para GPU
         offset = 0
         for mat, face_list in faces_by_mat.items():
             self.material_groups[mat] = {'start': offset, 'count': 0}
-            for vi, ti in face_list:
+            for vi, ti, ni in face_list:
                 idxs = self._triangulate(vi)
                 tex_idxs = self._triangulate(ti)
-                for v_idx, t_idx in zip(idxs, tex_idxs):
+                norm_idxs = self._triangulate(ni) 
+                for v_idx, t_idx, n_idx in zip(idxs, tex_idxs, norm_idxs):
                     # ajusta índice -1 (OBJ é 1-based)
                     self.vertices.append(verts[v_idx-1])
                     # se não houver UV, usa UV padrão [0,0]
                     self.texcoords.append(texs[t_idx-1] if t_idx > 0 else [0.0, 0.0])
+                    self.normals.append(norms[n_idx-1] if n_idx > 0 else [0.0, 0.0, 1.0])  # usa normal padrão
                     self.material_groups[mat]['count'] += 1
                     offset += 1
 
@@ -118,6 +124,15 @@ class GenericObj:
         uv_loc = glGetAttribLocation(self.shader_program, "texture_coord")
         glEnableVertexAttribArray(uv_loc)
         glVertexAttribPointer(uv_loc, 2, GL_FLOAT, GL_FALSE, 0, None)
+
+        # Buffer de normais
+        self.vbo_normals = glGenBuffers(1)
+        norms = np.array(self.normals, dtype=np.float32)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo_normals)
+        glBufferData(GL_ARRAY_BUFFER, norms.nbytes, norms, GL_STATIC_DRAW)
+        norm_loc = glGetAttribLocation(self.shader_program, "normal")
+        glEnableVertexAttribArray(norm_loc)
+        glVertexAttribPointer(norm_loc, 3, GL_FLOAT, GL_FALSE, 0, None)
 
         # limpa bindings para evitar efeitos colaterais
         glBindVertexArray(0)
@@ -244,6 +259,14 @@ class GenericObj:
         else:
             glUniform1i(glGetUniformLocation(self.shader_program, "isEmissive"), 0)
         
+        glUniform1i(glGetUniformLocation(self.shader_program, "objType"), self.obj_type)
+
+        # coisar ilumincacao
+
+        glUniform1f(glGetUniformLocation(self.shader_program, "mat_kd"), self.kd)
+        glUniform1f(glGetUniformLocation(self.shader_program, "mat_ks"), self.ks)
+        glUniform1f(glGetUniformLocation(self.shader_program, "mat_ns"), self.ns)
+
         # 4. Renderização normal
         glBindVertexArray(self.vao)
         for mat_name, grp in self.material_groups.items():
