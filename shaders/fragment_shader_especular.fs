@@ -42,7 +42,6 @@ uniform float mat_kd;
 uniform float mat_ks;
 uniform float mat_ns;
 
-
 // ambient light (always)
 uniform bool  luzAmbienteLigada;
 uniform float luzAmbientePower;
@@ -55,6 +54,8 @@ uniform float emissivePower;
 
 // object type: 0=internal, 1=external, 2=bus
 uniform int   objType;
+uniform vec3 onibusMinBounds;
+uniform vec3 onibusMaxBounds;
 
 // spotlights (external)
 uniform bool  luzFarolLigada;
@@ -93,6 +94,7 @@ vec3 calcPointLight(vec3 Lpos, vec3 Lcolor, bool ligado, float ka_curr_fonte,
     // specular shading
     vec3 reflectDir = reflect(-L, N);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), mat_ns);
+
     // attenuation
     float distance = length(Lpos - out_fragPos);
     float attenuation = 1.0 / (constant_curr_fonte + linear_curr_fonte * distance + quadratic_curr_fonte * (distance * distance));
@@ -121,6 +123,7 @@ vec3 calcSpotLight(vec3 Lpos, vec3 Lcolor, vec3 Ldir, bool ligado, float ka_curr
     // specular shading
     vec3 reflectDir = reflect(-L, N);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), mat_ns);
+
     // attenuation
     float distance = length(Lpos - out_fragPos);
     float attenuation = 1.0 / (constant_curr_fonte + linear_curr_fonte * distance + quadratic_curr_fonte * (distance * distance));
@@ -129,7 +132,7 @@ vec3 calcSpotLight(vec3 Lpos, vec3 Lcolor, vec3 Ldir, bool ligado, float ka_curr
     float theta = dot(L, normalize(-Ldir));
     float epsilon = lightCutOff - lightOuterCutOff;
     float intensity = clamp((theta - lightOuterCutOff) / epsilon, 0.0, 1.0);
-    // return vec3(0, 1.0, 1.0) * intensity * attenuation; 
+    
     // combine results
     vec3 ambient = luzAmbienteLigada ? ka_curr_fonte * Lcolor * vec3(texture(samplerTexture, out_texture)) * mat_kd : vec3(0.0);
     vec3 diffuse = kd_curr_fonte * Lcolor * diff * vec3(texture(samplerTexture, out_texture)) * mat_kd;
@@ -140,6 +143,12 @@ vec3 calcSpotLight(vec3 Lpos, vec3 Lcolor, vec3 Ldir, bool ligado, float ka_curr
     return ambient + diffuse + specular;
 }
 
+bool isInsideBus(vec3 fragPos) {
+    return (fragPos.x >= onibusMinBounds.x && fragPos.x <= onibusMaxBounds.x &&
+            fragPos.y >= onibusMinBounds.y && fragPos.y <= onibusMaxBounds.y &&
+            fragPos.z >= onibusMinBounds.z && fragPos.z <= onibusMaxBounds.z);
+}
+
 void main() {
     // emissive objects
     if (isEmissive) {
@@ -147,42 +156,60 @@ void main() {
         return;
     }
 
-    // ambient for all
+    bool insideBus = isInsideBus(out_fragPos);
     vec3 colorAccum = vec3(0.0);
-    vec3 fone_effects = calcPointLight(posFone, corFone, luzFoneLigada, 
-                                    ka_fone, ks_fone, kd_fone, 
-                                    constant_fone, linear_fone, quadratic_fone);
-    vec3 lampada_effects = calcPointLight(posLampada, corLampada, luzLampadaLigada, 
-                                    ka_lampada, ks_lampada, kd_lampada, 
-                                    constant_lampada, linear_lampada, quadratic_lampada);
 
-    vec3 l1_effects = calcSpotLight(lightPos1, lightColorFarol, lightDir1, luzFarolLigada, 
-                                    ka_farol, ks_farol, kd_farol, 
-                                    constant_farol, linear_farol, quadratic_farol) * lightPower;
-
-    vec3 l2_effects = calcSpotLight(lightPos2, lightColorFarol, lightDir2, luzFarolLigada, 
-                                    ka_farol, ks_farol, kd_farol, 
-                                    constant_farol, linear_farol, quadratic_farol) * lightPower;
-    vec3 celular_effects = calcPointLight(posCelular, corCelular, luzCelularLigada, 
-                                    ka_celular, ks_celular, kd_celular, 
-                                    constant_celular, linear_celular, quadratic_celular);
-
-    if (objType == 0) {
-        colorAccum += fone_effects;
-        colorAccum += lampada_effects;
-    } else if (objType == 1) {
-        colorAccum += l1_effects;
-        colorAccum += l2_effects;
-        colorAccum += celular_effects;
-    } else {
-        colorAccum += fone_effects;
-        colorAccum += lampada_effects;
+    // --- Luz ambiente (APENAS para objetos externos ou partes externas do ônibus) ---
+    vec3 ambiente = vec3(0.0);
+    if (luzAmbienteLigada) {
+        if (objType == 1) { // Objetos externos sempre recebem
+            ambiente = luzAmbientePower * vec3(texture(samplerTexture, out_texture)) * mat_kd;
+        } 
+        else if (objType == 2 && !insideBus) { // Ônibus só recebe na parte externa
+            ambiente = luzAmbientePower * vec3(texture(samplerTexture, out_texture)) * mat_kd;
+        }
     }
 
-    // ambiente
-    colorAccum += luzAmbienteLigada ? luzAmbientePower * vec3(texture(samplerTexture, out_texture)) * mat_kd : vec3(0.0);
+    // --- Luzes internas (APENAS dentro do ônibus) ---
+    vec3 fone_effects = vec3(0.0);
+    vec3 lampada_effects = vec3(0.0);
 
+    if (insideBus) {
+        fone_effects = calcPointLight(posFone, corFone, luzFoneLigada, 
+                                    ka_fone, ks_fone, kd_fone, 
+                                    constant_fone, linear_fone, quadratic_fone);
+
+        lampada_effects = calcPointLight(posLampada, corLampada, luzLampadaLigada, 
+                                    ka_lampada, ks_lampada, kd_lampada, 
+                                    constant_lampada, linear_lampada, quadratic_lampada);
+    }
+
+    // --- Luzes externas ---
+    vec3 l1_effects = calcSpotLight(lightPos1, lightColorFarol, lightDir1, luzFarolLigada, 
+                                  ka_farol, ks_farol, kd_farol, 
+                                  constant_farol, linear_farol, quadratic_farol) * lightPower;
+
+    vec3 l2_effects = calcSpotLight(lightPos2, lightColorFarol, lightDir2, luzFarolLigada, 
+                                  ka_farol, ks_farol, kd_farol, 
+                                  constant_farol, linear_farol, quadratic_farol) * lightPower;
     
+    vec3 celular_effects = calcPointLight(posCelular, corCelular, luzCelularLigada, 
+                                        ka_celular, ks_celular, kd_celular, 
+                                        constant_celular, linear_celular, quadratic_celular);
 
-    FragColor = vec4(colorAccum, 1);
+    // --- Combinação final ---
+    if (objType == 0) { // Objetos internos
+        colorAccum = fone_effects + lampada_effects;
+    } 
+    else if (objType == 1) { // Objetos externos
+        colorAccum = ambiente + l1_effects + l2_effects + celular_effects;
+    } 
+    else { // Ônibus
+        colorAccum = fone_effects + lampada_effects;
+        if (!insideBus) {
+            colorAccum += ambiente + l1_effects + l2_effects + celular_effects;
+        }
+    }
+
+    FragColor = vec4(colorAccum, 1.0);
 }

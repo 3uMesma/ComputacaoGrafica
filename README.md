@@ -36,6 +36,9 @@ Aperte setinha pra cima/pra baixo.
 - Obj3 - Placa de parar (escala). Segure o dígito 0 (serviria para "alertar" o ônibus)
 - Farol - tecla F liga e desliga os farois
 - Luz Ambiente - tecla L liga e desliga a luz ambiente
+- Luz do celular - tecla U liga e desliga essa luz
+- Luz do fone de ouvido - tecla O liga e desliga essa luz
+- Luz da lâmpada - tecla I liga e desliga essa luz
 
 **Notas:**
 

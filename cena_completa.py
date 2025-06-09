@@ -519,6 +519,15 @@ def main():
         luzCelularPos = scene_objects[4].get_pos()  # Posição da luz do celular
         luzFonePos = scene_objects[11].get_pos()  # Posição da luz do fone de ouvido
         luzLampadaPos = scene_objects[10].get_pos()  # Posição da luz da lâmpada do ônibus
+        # Calcula os limites do ônibus (ajuste conforme o tamanho do modelo)
+        onibus_min_bounds = glm.vec3(busPos.x - 1.5, busPos.y + 1.0, busPos.z - 6.2)
+        onibus_max_bounds = glm.vec3(busPos.x + 1.5, busPos.y + 3.6, busPos.z + 6.18)
+
+        # Envia para o shader
+        glUniform3f(glGetUniformLocation(program, "onibusMinBounds"), 
+                    onibus_min_bounds.x, onibus_min_bounds.y, onibus_min_bounds.z)
+        glUniform3f(glGetUniformLocation(program, "onibusMaxBounds"), 
+                    onibus_max_bounds.x, onibus_max_bounds.y, onibus_max_bounds.z)
 
         # Aplica o poder da luz ambiente
         glUniform1f(glGetUniformLocation(program, "luzAmbientePower"), luz_ambiente_power)
@@ -573,7 +582,8 @@ def main():
         glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_TRUE, view_matrix())
         glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_TRUE, projection_matrix())
 
-        for i, objmeta in enumerate(scene_objects):
+        for i, objmeta in enumerate(scene_objects):      
+            # Desenha o objeto
             objmeta.draw(model_matrix_func=model_matrix, **objmeta.transform)
 
 
