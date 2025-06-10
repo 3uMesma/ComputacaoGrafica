@@ -25,11 +25,11 @@ quadratic_farol = 0.002  # Atenuação quadrática do farol
 ka_fone = 0.7  # Coeficiente de reflexão ambiente do fone
 kd_fone = 0.3  # Coeficiente de reflexão difusa do fone
 ks_fone = 0.2  # Coeficiente de reflexão especular do fone
-constant_fone = 1.0  # Atenuação constante do fone
-linear_fone = 0.9 # Atenuação linear do fone
-quadratic_fone = 0.8  # Atenuação quadrática do fone
+constant_fone = 0.5  # Atenuação constante do fone
+linear_fone = 1.3 # Atenuação linear do fone
+quadratic_fone = 1.2  # Atenuação quadrática do fone
 
-ka_lampada = 1  # Coeficiente de reflexão ambiente da lâmpada
+ka_lampada = 1.0  # Coeficiente de reflexão ambiente da lâmpada
 kd_lampada = 0.7  # Coeficiente de reflexão difusa da lâmpada
 ks_lampada = 0.5  # Coeficiente de reflexão especular da lâmpada
 constant_lampada = 1.0  # Atenuação constante da lâmpada
@@ -40,8 +40,8 @@ ka_celular = 1  # Coeficiente de reflexão ambiente do celular
 kd_celular = 0.7  # Coeficiente de reflexão difusa do celular
 ks_celular = 0.5  # Coeficiente de reflexão especular do celular
 constant_celular = 1.0  # Atenuação constante do celular
-linear_celular = 0.09  # Atenuação linear do celular
-quadratic_celular = 0.032  # Atenuação quadrática do celular
+linear_celular = 0.7  # Atenuação linear do celular
+quadratic_celular = 0.5  # Atenuação quadrática do celular
 
 luz_ambiente_ligada = True
 luz_ambiente_power = 0.8
@@ -49,10 +49,10 @@ luz_farol_ligada = True
 luzCelularCor = glm.vec3(1.0, 0.0, 0.0)  # Cor da luz do celular
 luzCelularPos = glm.vec3(0.0, 10.0, 0.0)  # Posição da luz do celular
 luzCelularLigada = True
-luzFoneCor = glm.vec3(0.0, 1.0, 0.0)  # Cor da luz do fone de ouvido
+luzFoneCor = glm.vec3(0.5, 0.0, 0.5)  # Cor da luz do fone de ouvido
 luzFonePos = glm.vec3(0.0, 10.0, 0.0)  # Posição da luz do fone de ouvido
 luzFoneLigada = True
-luzLampadaCor = glm.vec3(0.0, 0.0, 1.0)  # Cor da luz da lâmpada do ônibus
+luzLampadaCor = glm.vec3(1.0, 1.0, 0.5)  # Cor da luz da lâmpada do ônibus
 luzLampadaPos = glm.vec3(0.0, 10.0, 0.0)  # Posição da luz da lâmpada do ônibus
 luzLampadaLigada = True
 
@@ -519,9 +519,12 @@ def main():
         usar_shader(program)
         
         luzCelularPos = scene_objects[4].get_pos()  # Posição da luz do celular
+        luzCelularPos.y += 4.0
+        luzCelularPos.x += 1.0
         luzFonePos = scene_objects[11].get_pos()  # Posição da luz do fone de ouvido
         luzLampadaPos = scene_objects[10].get_pos()  # Posição da luz da lâmpada do ônibus
-        # Calcula os limites do ônibus (ajuste conforme o tamanho do modelo)
+
+        # Calcula os limites do ônibus
         onibus_min_bounds = glm.vec3(busPos.x - 1.5, busPos.y + 1.0, busPos.z - 6.2)
         onibus_max_bounds = glm.vec3(busPos.x + 1.5, busPos.y + 3.6, busPos.z + 6.18)
 

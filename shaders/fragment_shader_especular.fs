@@ -133,8 +133,8 @@ void main() {
     // --- Efeito de aro RGB no fone ---
     if (luzFoneLigada && (objType == 0 || (objType == 2 && insideBus))) {
         float distXZ = distance(out_fragPos.xz, posFone.xz);
-        float centerRadius = aroFoneRaio;
-        float ringWidth = aroFoneEspessura;
+        float centerRadius = 30.0;
+        float ringWidth = 10.0;
         float edgeSmooth = 0.01;
 
         float outer = smoothstep(centerRadius + ringWidth, centerRadius + ringWidth - edgeSmooth, distXZ);
