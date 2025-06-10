@@ -30,11 +30,11 @@ linear_fone = 1.3 # Atenuação linear do fone
 quadratic_fone = 1.2  # Atenuação quadrática do fone
 
 ka_lampada = 1.0  # Coeficiente de reflexão ambiente da lâmpada
-kd_lampada = 0.7  # Coeficiente de reflexão difusa da lâmpada
-ks_lampada = 0.5  # Coeficiente de reflexão especular da lâmpada
+kd_lampada = 1.0  # Coeficiente de reflexão difusa da lâmpada
+ks_lampada = 1.0  # Coeficiente de reflexão especular da lâmpada
 constant_lampada = 1.0  # Atenuação constante da lâmpada
-linear_lampada = 0.09  # Atenuação linear da lâmpada
-quadratic_lampada = 0.032  # Atenuação quadrática da lâmpada
+linear_lampada = 0.009  # Atenuação linear da lâmpada
+quadratic_lampada = 0.0032  # Atenuação quadrática da lâmpada
 
 ka_celular = 1  # Coeficiente de reflexão ambiente do celular
 kd_celular = 0.7  # Coeficiente de reflexão difusa do celular
@@ -505,7 +505,7 @@ def main():
                         farol.light_direction.y, 
                         farol.light_direction.z)
             
-            # Parâmetros comuns (ou podem ser específicos por farol se necessário)
+            # Parâmetros comuns
             glUniform1f(glGetUniformLocation(program, "lightCutOff"), farol.light_cutoff)
             glUniform1f(glGetUniformLocation(program, "lightOuterCutOff"), farol.light_outer_cutoff)
             glUniform1f(glGetUniformLocation(program, "lightPower"), farol.light_power)
@@ -525,8 +525,8 @@ def main():
         luzLampadaPos = scene_objects[10].get_pos()  # Posição da luz da lâmpada do ônibus
 
         # Calcula os limites do ônibus
-        onibus_min_bounds = glm.vec3(busPos.x - 1.5, busPos.y + 1.0, busPos.z - 6.2)
-        onibus_max_bounds = glm.vec3(busPos.x + 1.5, busPos.y + 3.6, busPos.z + 6.18)
+        onibus_min_bounds = glm.vec3(busPos.x - 1.5, busPos.y + 1.0, busPos.z - 6.6)
+        onibus_max_bounds = glm.vec3(busPos.x + 1.5, busPos.y + 3.6, busPos.z + 6.15)
 
         # Envia para o shader
         glUniform3f(glGetUniformLocation(program, "onibusMinBounds"), 
@@ -576,8 +576,6 @@ def main():
         glUniform1f(glGetUniformLocation(program, "constant_celular"), constant_celular)
         glUniform1f(glGetUniformLocation(program, "linear_celular"), linear_celular)
         glUniform1f(glGetUniformLocation(program, "quadratic_celular"), quadratic_celular)
-
-        
         
         # Configura outros parâmetros de iluminação
         glUniform3f(glGetUniformLocation(program, "lightColorFarol"), lightColor.x, lightColor.y, lightColor.z)
@@ -590,8 +588,6 @@ def main():
         for i, objmeta in enumerate(scene_objects):      
             # Desenha o objeto
             objmeta.draw(model_matrix_func=model_matrix, **objmeta.transform)
-
-
 
         glfw.swap_buffers(window)
         glfw.poll_events()

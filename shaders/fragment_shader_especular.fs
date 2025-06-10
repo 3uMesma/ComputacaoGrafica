@@ -84,9 +84,29 @@ vec3 calcSpotLight(vec3 Lpos, vec3 Lcolor, vec3 Ldir, bool ligado, float ka, flo
 }
 
 bool isInsideBus(vec3 fragPos) {
-    return (fragPos.x >= onibusMinBounds.x && fragPos.x <= onibusMaxBounds.x &&
-            fragPos.y >= onibusMinBounds.y && fragPos.y <= onibusMaxBounds.y &&
-            fragPos.z >= onibusMinBounds.z && fragPos.z <= onibusMaxBounds.z);
+    // Parte retangular (corpo principal)
+    bool inMainBody = (fragPos.x >= onibusMinBounds.x && fragPos.x <= onibusMaxBounds.x &&
+                       fragPos.y >= onibusMinBounds.y && fragPos.y <= onibusMinBounds.y + 3.2 &&
+                       fragPos.z >= onibusMinBounds.z && fragPos.z <= onibusMaxBounds.z);
+    
+    if (inMainBody) return true;
+    
+    float halfWidth = (onibusMaxBounds.x - onibusMinBounds.x) * 0.5;
+    float centerX = onibusMinBounds.x + halfWidth;
+    float radius = halfWidth;
+    float distFromCenterX = abs(fragPos.x - centerX);
+    
+    if (distFromCenterX > radius) return false;
+    
+    float yBase = onibusMinBounds.y + 4.5;
+    float arcHeight = 0.05;
+    
+    float relativeY = (fragPos.y - yBase) / arcHeight;
+    float circleEq = (distFromCenterX * distFromCenterX) / (radius * radius) + relativeY * relativeY;
+    
+    return (fragPos.z >= onibusMinBounds.z && fragPos.z <= onibusMaxBounds.z &&
+            fragPos.y >= yBase && fragPos.y <= onibusMaxBounds.y &&
+            circleEq <= 1.0);
 }
 
 void main() {
@@ -98,39 +118,38 @@ void main() {
     bool insideBus = isInsideBus(out_fragPos);
     vec3 colorAccum = vec3(0.0);
 
+    // --- Luz ambiente  ---
     vec3 ambiente = vec3(0.0);
-    if (luzAmbienteLigada) {
-        if (objType == 1 || (objType == 2 && !insideBus)) {
-            ambiente = luzAmbientePower * vec3(texture(samplerTexture, out_texture)) * mat_kd;
-        }
+    if (luzAmbienteLigada && (objType == 1 || !insideBus)) {
+        ambiente = luzAmbientePower * vec3(texture(samplerTexture, out_texture)) * mat_kd;
     }
 
+    // --- Luzes internas (só aplicam dentro do ônibus) ---
     vec3 fone_effects = vec3(0.0);
     vec3 lampada_effects = vec3(0.0);
-
     if (insideBus) {
         fone_effects = calcPointLight(posFone, corFone, luzFoneLigada, 
-                                      ka_fone, ks_fone, kd_fone, 
-                                      constant_fone, linear_fone, quadratic_fone);
+                                    ka_fone, ks_fone, kd_fone, 
+                                    constant_fone, linear_fone, quadratic_fone);
 
         lampada_effects = calcPointLight(posLampada, corLampada, luzLampadaLigada, 
-                                         ka_lampada, ks_lampada, kd_lampada, 
-                                         constant_lampada, linear_lampada, quadratic_lampada);
+                                       ka_lampada, ks_lampada, kd_lampada, 
+                                       constant_lampada, linear_lampada, quadratic_lampada);
     }
 
+    // --- Luzes externas (faróis e celular) ---
     vec3 l1_effects = calcSpotLight(lightPos1, lightColorFarol, lightDir1, luzFarolLigada,
-                                    ka_farol, ks_farol, kd_farol,
-                                    constant_farol, linear_farol, quadratic_farol) * lightPower;
+                                  ka_farol, ks_farol, kd_farol,
+                                  constant_farol, linear_farol, quadratic_farol) * lightPower;
 
     vec3 l2_effects = calcSpotLight(lightPos2, lightColorFarol, lightDir2, luzFarolLigada,
-                                    ka_farol, ks_farol, kd_farol,
-                                    constant_farol, linear_farol, quadratic_farol) * lightPower;
+                                  ka_farol, ks_farol, kd_farol,
+                                  constant_farol, linear_farol, quadratic_farol) * lightPower;
 
     vec3 celular_effects = calcPointLight(posCelular, corCelular, luzCelularLigada,
-                                          ka_celular, ks_celular, kd_celular,
-                                          constant_celular, linear_celular, quadratic_celular);
+                                        ka_celular, ks_celular, kd_celular,
+                                        constant_celular, linear_celular, quadratic_celular);
 
-    // --- Efeito de aro RGB no fone ---
     if (luzFoneLigada && (objType == 0 || (objType == 2 && insideBus))) {
         float distXZ = distance(out_fragPos.xz, posFone.xz);
         float centerRadius = 30.0;
@@ -145,11 +164,15 @@ void main() {
         colorAccum += aroColor;
     }
 
+    // --- Combinação final ---
     if (objType == 0) {
+        // Objetos internos (só luzes do fone/lâmpada)
         colorAccum = fone_effects + lampada_effects;
     } else if (objType == 1) {
+        // Cenário externo (luz ambiente + faróis + celular)
         colorAccum = ambiente + l1_effects + l2_effects + celular_effects;
     } else {
+        // Ônibus (luzes internas + externas se estiver fora)
         colorAccum = fone_effects + lampada_effects;
         if (!insideBus) {
             colorAccum += ambiente + l1_effects + l2_effects + celular_effects;
