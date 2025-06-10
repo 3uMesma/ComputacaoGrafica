@@ -35,10 +35,13 @@ Aperte setinha pra cima/pra baixo.
 - Obj2 - Ônibus (rotação). Aperte as setinhas pros lados
 - Obj3 - Placa de parar (escala). Segure o dígito 0 (serviria para "alertar" o ônibus)
 - Farol - tecla F liga e desliga os farois
-- Luz Ambiente - tecla L liga e desliga a luz ambiente
+- Luz Ambiente Externa Global - tecla L liga e desliga a luz ambiente
 - Luz do celular - tecla U liga e desliga essa luz
 - Luz do fone de ouvido - tecla O liga e desliga essa luz
 - Luz da lâmpada - tecla I liga e desliga essa luz
+- Luz especular (ks) de todas as luzes - 1 e 2 pra diminuir e aumentar
+- Luz difusa (kd) de todas as luzes - 3 e 4 pra diminuir e aumentar
+- Luz Ambiente (ka) de todas as luzes - 5 e 6 pra diminuir e aumentar
 
 **Notas:**
 

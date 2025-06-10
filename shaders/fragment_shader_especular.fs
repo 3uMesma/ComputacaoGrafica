@@ -57,7 +57,7 @@ vec3 calcPointLight(vec3 Lpos, vec3 Lcolor, bool ligado, float ka, float ks, flo
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), mat_ns);
     float distance = length(Lpos - out_fragPos);
     float attenuation = 1.0 / (constant + linear * distance + quadratic * (distance * distance));
-    vec3 ambient = luzAmbienteLigada ? ka * Lcolor * vec3(texture(samplerTexture, out_texture)) * mat_kd : vec3(0.0);
+    vec3 ambient = ka * Lcolor * vec3(texture(samplerTexture, out_texture)) * mat_kd;
     vec3 diffuse = kd * Lcolor * diff * vec3(texture(samplerTexture, out_texture)) * mat_kd;
     vec3 specular = ks * Lcolor * spec * vec3(texture(samplerTexture, out_texture)) * mat_ks;
     return (ambient + diffuse + specular) * attenuation;
@@ -77,7 +77,7 @@ vec3 calcSpotLight(vec3 Lpos, vec3 Lcolor, vec3 Ldir, bool ligado, float ka, flo
     float theta = dot(L, normalize(-Ldir));
     float epsilon = lightCutOff - lightOuterCutOff;
     float intensity = clamp((theta - lightOuterCutOff) / epsilon, 0.0, 1.0);
-    vec3 ambient = luzAmbienteLigada ? ka * Lcolor * vec3(texture(samplerTexture, out_texture)) * mat_kd : vec3(0.0);
+    vec3 ambient = ka * Lcolor * vec3(texture(samplerTexture, out_texture)) * mat_kd;
     vec3 diffuse = kd * Lcolor * diff * vec3(texture(samplerTexture, out_texture)) * mat_kd;
     vec3 specular = ks * Lcolor * spec * vec3(texture(samplerTexture, out_texture)) * mat_ks;
     return (ambient + diffuse + specular) * attenuation * intensity;

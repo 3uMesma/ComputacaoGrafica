@@ -117,7 +117,7 @@ def update_bus_position(scene_objects, offsets_iniciais):
     for farol in [farol_direito, farol_esquerdo]:
         farol.light_direction = glm.vec3(0.0, 0.0, 1.0)
         farol.light_cutoff = glm.cos(glm.radians(15.0))
-        farol.light_outer_cutoff = glm.cos(glm.radians(18.0))
+        farol.light_outer_cutoff = glm.cos(glm.radians(20.0))
         farol.light_power = 1.0
     
     farol_direito.position_offset = glm.vec3(-1.25, 1.30, 6.0)
@@ -186,7 +186,9 @@ def process_input(window, obstaculos):
     speed = 2.5 * deltaTime
     global luz_ambiente_ligada, luz_ambiente_power, luz_farol_ligada, luzCelularLigada, luzFoneLigada, luzLampadaLigada
     global busPos, busYaw
-    global kd, ka, ks, ns
+    global ks_farol, ks_celular, ks_fone, ks_lampada
+    global kd_farol, kd_celular, kd_fone, kd_lampada
+    global ka_farol, ka_celular, ka_fone, ka_lampada
 
     speed = 2.5 * deltaTime
     # translação frente/trás (eixo local Z do ônibus)
@@ -327,6 +329,54 @@ def process_input(window, obstaculos):
         print(f"Luz da lâmpada {'ligada' if luzLampadaLigada else 'desligada'}")
         while glfw.get_key(window, glfw.KEY_I) == glfw.PRESS:  # Espera soltar a tecla
             glfw.poll_events()
+    if glfw.get_key(window, glfw.KEY_1) == glfw.PRESS:
+        if ks_farol > 0.1 and ks_celular > 0.1 and ks_fone > 0.1 and ks_lampada > 0.1:
+            ks_farol -= 0.1
+            ks_celular -= 0.1
+            ks_fone -= 0.1
+            ks_lampada -= 0.1
+            print(f"Reduzindo ks de todas as luzes para {ks_farol:.2f} {ks_celular:.2f} {ks_fone:.2f} {ks_lampada:.2f}")
+    elif glfw.get_key(window, glfw.KEY_2) == glfw.PRESS:
+        if ks_farol < 10.0 and ks_celular < 10.0 and ks_fone < 10.0 and ks_lampada < 10.0:
+            ks_farol += 0.1
+            ks_celular += 0.1
+            ks_fone += 0.1
+            ks_lampada += 0.1
+            print(f"Aumentando ks de todas as luzes para {ks_farol:.2f} {ks_celular:.2f} {ks_fone:.2f} {ks_lampada:.2f}")
+    
+    if glfw.get_key(window, glfw.KEY_3) == glfw.PRESS:
+        if kd_farol > 0.1 and kd_celular > 0.1 and kd_fone > 0.1 and kd_lampada > 0.1:
+            kd_farol -= 0.1
+            kd_celular -= 0.1
+            kd_fone -= 0.1
+            kd_lampada -= 0.1
+            print(f"Reduzindo kd de todas as luzes para {kd_farol:.2f} {kd_celular:.2f} {kd_fone:.2f} {kd_lampada:.2f}")
+            #while glfw.get_key(window, glfw.KEY_3) == glfw.PRESS:
+            #    glfw.poll_events()
+    elif glfw.get_key(window, glfw.KEY_4) == glfw.PRESS:
+        if kd_farol < 10.0 and kd_celular < 10.0 and kd_fone < 10.0 and kd_lampada < 10.0:
+            kd_farol += 0.1
+            kd_celular += 0.1
+            kd_fone += 0.1
+            kd_lampada += 0.1
+            print(f"Aumentando kd de todas as luzes para {kd_farol:.2f} {kd_celular:.2f} {kd_fone:.2f} {kd_lampada:.2f}")
+            #while glfw.get_key(window, glfw.KEY_4) == glfw.PRESS:
+            #    glfw.poll_events()
+    
+    if glfw.get_key(window, glfw.KEY_5) == glfw.PRESS:
+        if ka_farol > 0.1 and ka_celular > 0.1 and ka_fone > 0.1 and ka_lampada > 0.1:
+            ka_farol -= 0.1
+            ka_celular -= 0.1
+            ka_fone -= 0.1
+            ka_lampada -= 0.1
+            print(f"Reduzindo ka de todas as luzes para {ka_farol:.2f} {ka_celular:.2f} {ka_fone:.2f} {ka_lampada:.2f}")
+    elif glfw.get_key(window, glfw.KEY_6) == glfw.PRESS:
+        if ka_farol < 10.0 and ka_celular < 10.0 and ka_fone < 10.0 and ka_lampada < 10.0:
+            ka_farol += 0.1
+            ka_celular += 0.1
+            ka_fone += 0.1
+            ka_lampada += 0.1
+            print(f"Aumentando ka de todas as luzes para {ka_farol:.2f} {ka_celular:.2f} {ka_fone:.2f} {ka_lampada:.2f}")
 
 
 def mouse_callback(window, xpos, ypos):
